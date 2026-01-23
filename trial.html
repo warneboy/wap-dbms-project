@@ -1,4 +1,17 @@
- @media (min-width:1000px) {
+
+
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnlineShopping | Dream Basket</title>
+<!-- <link rel="stylesheet" href="style.css"> -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+  @media (min-width:1000px) {
   /* =========================
    RESET & BASE
 ========================= */
@@ -300,3 +313,172 @@
   cursor: pointer; /* pointer on hover */
 }
 }
+
+
+
+
+</style>
+
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo"><img class="logo" src="image/logo.png" alt="Logo" height="50"></div>
+
+  <div class="category-wrapper">
+    <div class="category-btn">Categories</div>
+    <ul class="category-menu">
+      <li>Motors, Tools & DIY</li>
+      <li>Home & Lifestyle</li>
+      <li>Sports & Outdoor</li>
+      <li>Electronic Accessories</li>
+      <li>Groceries & Pets</li>
+      <li>Electronic Devices</li>
+      <li>TV & Home Appliances</li>
+      <li>Men's Fashion</li>
+    </ul>
+  </div>
+
+  <div class="search-box">
+    <input type="text" placeholder="Search for products, brands and more">
+    <button>Search</button>
+  </div>
+
+  <ul class="nav-links">
+    <li><a  onclick="openLogin()">Login</a></li>
+    <li><a >About</a></li>
+    <li><a >Cart</a></li>
+    <li class="user-dropdown">
+      <a href="#">
+        <i class="fa-solid fa-circle-user" style="font-size: 28px;"></i>
+      </a>
+    <div class="dropdown-menu">
+      <p><strong>saugat Nepal</strong></p>
+      <p>Phone: +9779818262380</p>
+      <p>Email: saugatnepal48@gmail.com</p>
+      <hr>
+      <a href="#">Settings</a>
+      <a href="#">Purchase Info / Sales</a>
+      <a href="#">Logout</a>
+    </div>
+  </li>
+
+
+
+
+  </ul>
+</nav>
+
+<!-- BANNER -->
+<div class="banner">
+  <button class="banner-btn left" onclick="prevSlide()">&#10094;</button>
+  <div class="banner-window">
+    <div class="banner-track" id="bannerTrack">
+      <div class="banner-slide">Big Sale<br>Up to 60% OFF</div>
+      <div class="banner-slide">Smartphones<br>Starting ₹9,999</div>
+      <div class="banner-slide">Headphones<br>Flat 40% OFF</div>
+      <div class="banner-slide">Fashion<br>Buy 1 Get 1</div>
+    </div>
+  </div>
+  <button class="banner-btn right" onclick="nextSlide()">&#10095;</button>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="overlay" id="loginPopup">
+  <div class="popup-container">
+    <button class="close-btn" onclick="closeLogin()">×</button>
+    <h2>Login</h2>
+    <p id="loginError"></p>
+    <form id="loginForm">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" name="email" required>
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" name="password" required>
+      </div>
+      <button type="submit" class="login-btn">Login</button>
+    </form>
+    <span class="switch-link" onclick="switchToSignup()">Create an account</span>
+    <span style="color: gray; font-size: 15px;margin-left: 35%;"> 	&#169; All rights reserved.</span>
+  </div>
+</div>
+
+<!-- SIGNUP MODAL -->
+<div class="overlay" id="signupPopup">
+  <div class="popup-container">
+    <button class="close-btn" onclick="closeSignup()">×</button>
+    <h2>Sign Up</h2>
+    <p id="errorMsg"></p>
+    <p id="successMsg"></p>
+    <form id="signupForm" enctype="multipart/form-data">
+
+      <div class="input-group">
+        <label>Role</label>
+        <select id="role" name="role" required>
+          <option value="customer">Customer</option>
+          <option value="shopkeeper">Shopkeeper</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" name="full_name" required>
+      </div>
+
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" name="email" required>
+      </div>
+
+      <div class="input-group">
+        <label>Phone Number</label>
+        <div class="phone-group">
+          <select id="country_code" name="country_code">
+            <option value="+977">🇳🇵 +977</option>
+          </select>
+          <input type="text" id="mobile" name="mobile" required>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+
+      <div class="input-group">
+        <label>Confirm Password</label>
+        <input type="password" id="confirm_password" required>
+      </div>
+
+      <div class="input-group shopkeeper-only">
+        <label>Shop Name</label>
+        <input type="text" name="shop_name">
+      </div>
+
+      <div class="input-group shopkeeper-only">
+        <label>Shop Address</label>
+        <input type="text" name="shop_address">
+      </div>
+
+      <div class="input-group shopkeeper-only">
+        <label>Registration No</label>
+        <input type="text" name="registration_no">
+      </div>
+
+      <div class="input-group shopkeeper-only">
+        <label>Citizenship Image</label>
+        <input type="file" name="citizenship" accept="image/*">
+      </div>
+
+      <button class="signup-btn">Signup</button>
+      <span style="color: gray; font-size: 15px;margin-left: 35%;">	&#169; All rights reserved.</span>
+
+    </form>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

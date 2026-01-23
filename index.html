@@ -1,3 +1,7 @@
+
+
+<!-- index.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OnlineShopping | Dream Basket</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
 
@@ -32,10 +37,27 @@
   </div>
 
   <ul class="nav-links">
-    <li><a  onclick="openLogin()">Login</a></li>
-    <li><a >Orders</a></li>
-    <li><a >Cart</a></li>
-    <li><a onclick=""></a></li>
+    <li><a href="about.html" >About</a></li>
+    <li><a href="" >Cart</a></li>
+    <li id="loginNav"><a onclick="openLogin()">Login</a></li>
+
+  <li class="user-dropdown" id="userNav" style="display:none;">
+    <a><i class="fa-solid fa-circle-user" style="font-size:30px;color:#0fe4e4;"></i></a>
+
+    <div class="dropdown-menu">
+      <p>
+        <strong id="profileRole"
+          style="background:gray;color:white;padding:4px 8px;border-radius:12px;display:none;">
+        </strong>
+      </p>
+      <p>Name: <strong id="userName"></strong></p>
+      <p>Phone: <span id="userPhone"></span></p>
+      <p>Email: <span id="userEmail"></span></p>
+      <hr>
+      <a href="#">Settings</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </li>
   </ul>
 </nav>
 
@@ -71,6 +93,7 @@
       <button type="submit" class="login-btn">Login</button>
     </form>
     <span class="switch-link" onclick="switchToSignup()">Create an account</span>
+    <span style="color: gray; font-size: 15px;margin-left: 35%;"> 	&#169; All rights reserved.</span>
   </div>
 </div>
 
@@ -106,8 +129,6 @@
         <div class="phone-group">
           <select id="country_code" name="country_code">
             <option value="+977">🇳🇵 +977</option>
-            <option value="+91">🇮🇳 +91</option>
-            <option value="+880">🇧🇩 +880</option>
           </select>
           <input type="text" id="mobile" name="mobile" required>
         </div>
@@ -144,6 +165,8 @@
       </div>
 
       <button class="signup-btn">Signup</button>
+      <span style="color: gray; font-size: 15px;margin-left: 35%;">	&#169; All rights reserved.</span>
+
     </form>
   </div>
 </div>
