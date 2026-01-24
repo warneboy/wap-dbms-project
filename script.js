@@ -23,13 +23,12 @@ if (totalSlides > 0) setInterval(nextSlide, 4000);
 // ======================= MODAL CONTROLS =======================
 function openLogin() {
   document.getElementById("loginPopup").style.display = "flex";
+  document.getElementById("loginForm").reset();
+  document.getElementById("loginError").textContent = "";
 }
 
 function closeLogin() {
-  const loginPopup = document.getElementById("loginPopup");
-  loginPopup.style.display = "none";
-  document.getElementById("loginForm").reset();
-  document.getElementById("loginError").textContent = "";
+  document.getElementById("loginPopup").style.display = "none";
 }
 
 function openSignup() {
@@ -37,8 +36,7 @@ function openSignup() {
 }
 
 function closeSignup() {
-  const signupPopup = document.getElementById("signupPopup");
-  signupPopup.style.display = "none";
+  document.getElementById("signupPopup").style.display = "none";
   document.getElementById("signupForm").reset();
   document.getElementById("errorMsg").textContent = "";
   document.getElementById("successMsg").textContent = "";
@@ -60,6 +58,7 @@ function toggleFields() {
     el.style.display = roleSelect.value === "shopkeeper" ? "block" : "none"
   );
 }
+
 if (roleSelect) {
   toggleFields();
   roleSelect.addEventListener("change", toggleFields);
@@ -72,7 +71,7 @@ const errorMsg = document.getElementById("errorMsg");
 const successMsg = document.getElementById("successMsg");
 
 function validatePassword() {
-  if (confirmPassword.value === "") return true;
+  if (!confirmPassword.value) return true;
   if (password.value !== confirmPassword.value) {
     confirmPassword.classList.add("error");
     errorMsg.textContent = "Passwords do not match";
@@ -154,8 +153,8 @@ if (loginForm) {
 
       // Update UI
       showProfile(data.user);
-      document.getElementById("loginNav").style.display = "none"; // hide login
-      document.getElementById("userNav").style.display = "block"; // show profile
+      document.getElementById("loginNav").style.display = "none"; 
+      document.getElementById("userNav").style.display = "block"; 
 
       closeLogin();
     } catch {
@@ -166,13 +165,26 @@ if (loginForm) {
 
 // ======================= PROFILE DISPLAY =======================
 function showProfile(user) {
-  const roleEl = document.getElementById("profileRole");
   if (!user) return;
 
+  const roleEl = document.getElementById("profileRole");
+  const uploadBtn = document.getElementById("uploadProduct");
+
+  // Determine role
   const role = user.id.charAt(0) === "C" ? "Customer" : "Shopkeeper";
+
   if (roleEl) {
     roleEl.textContent = role;
     roleEl.style.display = "inline-block";
+  }
+
+  // Show Upload button only for Shopkeepers, hide for everyone else
+  if (uploadBtn) {
+    if (role === "Shopkeeper") {
+      uploadBtn.style.display = "block";
+    } else {
+      uploadBtn.style.display = "none"; // <-- Important!
+    }
   }
 
   document.getElementById("userName").textContent = user.full_name;
@@ -185,16 +197,15 @@ window.addEventListener("load", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   if (user) {
     showProfile(user);
-    document.getElementById("loginNav").style.display = "none"; // hide login
-    document.getElementById("userNav").style.display = "block"; // show profile
+    document.getElementById("loginNav").style.display = "none"; 
+    document.getElementById("userNav").style.display = "block"; 
   }
 });
 
 // ======================= LOGOUT =======================
 function logout() {
   localStorage.clear();
-  document.getElementById("userNav").style.display = "none"; // hide profile
-  document.getElementById("loginNav").style.display = "block"; // show login
-  // Optionally reload page: location.reload();
-  closeLogin();
+  document.getElementById("userNav").style.display = "none"; 
+  document.getElementById("loginNav").style.display = "block"; 
+  openLogin(); // show login popup on logout
 }
