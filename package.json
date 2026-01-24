@@ -1,31 +1,18 @@
 {
-  "name": "dbms_project",
+  "name": "dbms-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "DBMS project backend for Render deployment",
   "main": "server.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/warneboy/dbms_project.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/warneboy/dbms_project/issues"
-  },
-  "homepage": "https://github.com/warneboy/dbms_project#readme",
   "dependencies": {
-    "@cloudflare/kv-asset-handler": "^0.4.2",
-    "bcrypt": "^6.0.0",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "multer": "^2.0.2",
+    "express": "^4.22.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^1.4.4",
     "mysql2": "^3.16.1"
   }
 }

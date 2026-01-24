@@ -1,33 +1,43 @@
-const express = require("express");
-const mysql = require("mysql2");
-const cors = require("cors");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+// server.js
+import express from "express";
+import mysql from "mysql2";
+import cors from "cors";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const JWT_SECRET = "supersecretkey";
 
-// ========== MIDDLEWARE ==========
+// ================= MIDDLEWARE =================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
 
-// ========== UPLOADS FOLDER ==========
-if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
+// ================= STATIC FILES =================
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // serve uploaded images
+app.use(express.static(__dirname)); // serve HTML, CSS, JS, images
 
-// ========== MULTER CONFIG ==========
+// ================= UPLOADS FOLDER =================
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+
+// ================= MULTER CONFIG =================
 const storage = multer.diskStorage({
-  destination: "uploads/",
+  destination: uploadsDir,
   filename: (req, file, cb) =>
     cb(null, "temp_" + Date.now() + path.extname(file.originalname))
 });
 const upload = multer({ storage });
 
-// ========== MYSQL CONNECTION ==========
+// ================= MYSQL CONNECTION =================
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -40,12 +50,11 @@ db.connect(err => {
   console.log("MySQL Connected");
 });
 
-// ========== ID GENERATOR ==========
+// ================= ID GENERATOR =================
 function generateId(table, prefix, callback) {
   db.query(`SELECT id FROM ${table} ORDER BY id DESC LIMIT 1`, (err, rows) => {
     if (err) return callback(err);
-    if (rows.length === 0)
-      return callback(null, prefix === "C" ? "C11111" : "S1111");
+    if (rows.length === 0) return callback(null, prefix === "C" ? "C11111" : "S1111");
 
     const num = parseInt(rows[0].id.substring(1)) + 1;
     callback(null, prefix + num);
@@ -94,7 +103,10 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
           let image = null;
           if (req.file) {
             image = id + path.extname(req.file.originalname);
-            fs.renameSync(`uploads/${req.file.filename}`, `uploads/${image}`);
+            fs.renameSync(
+              path.join(uploadsDir, req.file.filename),
+              path.join(uploadsDir, image)
+            );
           }
 
           db.query(
@@ -118,63 +130,30 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
 // ================= LOGIN =================
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-
   if (!email || !password) return res.status(400).json({ message: "Email and password required" });
 
-  // Check customers first
   db.query("SELECT * FROM customers WHERE email=?", [email], async (err, rows) => {
     if (err) return res.status(500).json({ message: err.message });
 
     if (rows.length) {
-      try {
-        const user = rows[0];
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(401).json({ message: "Invalid credentials" });
+      const user = rows[0];
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
-        const token = jwt.sign({ id: user.id, role: "customer" }, JWT_SECRET, { expiresIn: "1d" });
-
-        return res.json({
-          message: "Login successful",
-          role: "customer",
-          token,
-          user: {
-            id: user.id,
-            full_name: user.full_name,
-            email: user.email,
-            mobile: user.mobile
-          }
-        });
-      } catch (e) {
-        return res.status(500).json({ message: "Server error" });
-      }
+      const token = jwt.sign({ id: user.id, role: "customer" }, JWT_SECRET, { expiresIn: "1d" });
+      return res.json({ message: "Login successful", role: "customer", token, user });
     }
 
-    // Check shopkeepers
     db.query("SELECT * FROM shopkeepers WHERE email=?", [email], async (err, rows) => {
       if (err) return res.status(500).json({ message: err.message });
       if (!rows.length) return res.status(404).json({ message: "Account not found" });
 
-      try {
-        const user = rows[0];
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(401).json({ message: "Invalid credentials" });
+      const user = rows[0];
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
-        const token = jwt.sign({ id: user.id, role: "shopkeeper" }, JWT_SECRET, { expiresIn: "1d" });
-
-        return res.json({
-          message: "Login successful",
-          role: "shopkeeper",
-          token,
-          user: {
-            id: user.id,
-            full_name: user.full_name,
-            email: user.email,
-            mobile: user.mobile
-          }
-        });
-      } catch (e) {
-        return res.status(500).json({ message: "Server error" });
-      }
+      const token = jwt.sign({ id: user.id, role: "shopkeeper" }, JWT_SECRET, { expiresIn: "1d" });
+      return res.json({ message: "Login successful", role: "shopkeeper", token, user });
     });
   });
 });
@@ -196,14 +175,49 @@ app.post("/check-email", (req, res) => {
   });
 });
 
-// ================= GET CUSTOMERS =================
+// ================= GET USERS =================
 app.get("/users", (req, res) => {
-  const sql = "SELECT id, full_name, email, mobile FROM customers";
-  db.query(sql, (err, result) => {
+  db.query("SELECT id, full_name, email, mobile FROM customers", (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
     res.json(result);
   });
 });
 
-// ================= SERVER =================
+// ================= GET IMAGES =================
+app.get("/images", (req, res) => {
+  fs.readdir(uploadsDir, (err, files) => {
+    if (err) return res.status(500).json({ message: "Cannot read uploads folder" });
+    const images = files.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file));
+    res.json(images);
+  });
+});
+
+// ================= DELETE SHOPKEEPER (SAFE FILE DELETE) =================
+app.delete("/shopkeeper/:id", (req, res) => {
+  const { id } = req.params;
+
+  db.query("SELECT citizenship_image FROM shopkeepers WHERE id=?", [id], (err, rows) => {
+    if (err) return res.status(500).json({ message: err.message });
+    if (rows.length === 0) return res.status(404).json({ message: "Shopkeeper not found" });
+
+    const fileName = rows[0].citizenship_image;
+
+    // Delete file only if it exists
+    if (fileName) {
+      const filePath = path.join(uploadsDir, fileName);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
+    db.query("DELETE FROM shopkeepers WHERE id=?", [id], (err, result) => {
+      if (err) return res.status(500).json({ message: err.message });
+      res.json({ message: "Shopkeeper deleted successfully" });
+    });
+  });
+});
+
+// ================= SERVE HTML =================
+app.get("/upload", (req, res) => res.sendFile(path.join(__dirname, "upload.html")));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
+
+// ================= START SERVER =================
 app.listen(3000, () => console.log("Server running at http://localhost:3000"));

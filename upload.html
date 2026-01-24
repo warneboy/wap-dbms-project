@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Image Gallery</title>
+<style>
+body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+h1 { text-align: center; }
+#searchBar { display: block; margin: 20px auto; padding: 10px; width: 50%; font-size: 16px; }
+.gallery { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+.item { text-align: center; width: 150px; }
+.item img { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc; }
+.item p { margin-top: 10px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>image gallary</h1>
+<input type="text" id="searchBar" placeholder="Search by name...">
+<div class="gallery" id="gallery"></div>
+
+<script>
+async function loadImages() {
+    const gallery = document.getElementById('gallery');
+    try {
+        const res = await fetch("/images");
+        const images = await res.json();
+        gallery.innerHTML = images.map(img => {
+            const name = img.replace(/\.[^/.]+$/, "");
+            return `
+                <div class="item">
+                    <img src="/uploads/${img}" alt="${name}">
+                    <p>${name}</p>
+                </div>
+            `;
+        }).join('');
+
+        const searchBar = document.getElementById('searchBar');
+        searchBar.addEventListener('input', () => {
+            const filter = searchBar.value.toLowerCase();
+            const items = gallery.getElementsByClassName('item');
+            for (let i = 0; i < items.length; i++) {
+                const name = items[i].getElementsByTagName('p')[0].textContent.toLowerCase();
+                items[i].style.display = name.includes(filter) ? '' : 'none';
+            }
+        });
+    } catch (err) {
+        gallery.innerHTML = "<p style='color:red'>Failed to load images.</p>";
+        console.error(err);
+    }
+}
+loadImages();
+</script>
+
+</body>
+</html>
