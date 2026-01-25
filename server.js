@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import mysql from "mysql2";
 import cors from "cors";
@@ -22,8 +21,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ================= STATIC FILES =================
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // serve uploaded images
-app.use(express.static(__dirname)); // serve HTML, CSS, JS, images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(express.static(__dirname));
 
 // ================= UPLOADS FOLDER =================
 const uploadsDir = path.join(__dirname, "uploads");
@@ -32,8 +31,9 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 // ================= MULTER CONFIG =================
 const storage = multer.diskStorage({
   destination: uploadsDir,
-  filename: (req, file, cb) =>
-    cb(null, "temp_" + Date.now() + path.extname(file.originalname))
+  filename: (req, file, cb) => {
+    cb(null, "temp_" + Date.now() + path.extname(file.originalname));
+  }
 });
 const upload = multer({ storage });
 
@@ -50,14 +50,34 @@ db.connect(err => {
   console.log("MySQL Connected");
 });
 
-// ================= ID GENERATOR =================
-function generateId(table, prefix, callback) {
-  db.query(`SELECT id FROM ${table} ORDER BY id DESC LIMIT 1`, (err, rows) => {
-    if (err) return callback(err);
-    if (rows.length === 0) return callback(null, prefix === "C" ? "C11111" : "S1111");
+// ================= ID GENERATORS =================
+function generateUserId(table, prefix, callback) {
+  db.query(
+    `SELECT id FROM ${table} ORDER BY CAST(SUBSTRING(id,2) AS UNSIGNED) DESC LIMIT 1`,
+    (err, rows) => {
+      if (err) return callback(err);
+      if (!rows.length) return callback(null, prefix === "C" ? "C11111" : "S1111");
 
-    const num = parseInt(rows[0].id.substring(1)) + 1;
-    callback(null, prefix + num);
+      const next = parseInt(rows[0].id.substring(1)) + 1;
+      callback(null, prefix + next);
+    }
+  );
+}
+
+function generateProductId(callback) {
+  const sql = `
+    SELECT p_id 
+    FROM products 
+    ORDER BY CAST(SUBSTRING(p_id,2) AS UNSIGNED) DESC 
+    LIMIT 1
+  `;
+
+  db.query(sql, (err, rows) => {
+    if (err) return callback(err);
+    if (!rows.length) return callback(null, "P1111");
+
+    const num = parseInt(rows[0].p_id.match(/\d+/)[0]) + 1;
+    callback(null, "P" + num);
   });
 }
 
@@ -70,7 +90,7 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
     } = req.body;
 
     if (!role || !full_name || !email || !password)
-      return res.status(400).json({ message: "Missing required fields" });
+      return res.status(400).json({ message: "Missing fields" });
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -79,16 +99,17 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
       UNION
       SELECT email FROM shopkeepers WHERE email=?
     `;
+
     db.query(checkEmail, [email, email], (err, rows) => {
       if (err) return res.status(500).json({ message: err.message });
-      if (rows.length) return res.status(409).json({ message: "Email already exists" });
+      if (rows.length) return res.status(409).json({ message: "Email exists" });
 
       if (role === "customer") {
-        generateId("customers", "C", (err, id) => {
+        generateUserId("customers", "C", (err, id) => {
           if (err) return res.status(500).json({ message: err.message });
 
           db.query(
-            "INSERT INTO customers (id, full_name, email, mobile, password) VALUES (?,?,?,?,?)",
+            "INSERT INTO customers VALUES (?,?,?,?,?)",
             [id, full_name, email, mobile, hashed],
             err => {
               if (err) return res.status(500).json({ message: err.message });
@@ -96,8 +117,10 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
             }
           );
         });
-      } else if (role === "shopkeeper") {
-        generateId("shopkeepers", "S", (err, id) => {
+      }
+
+      if (role === "shopkeeper") {
+        generateUserId("shopkeepers", "S", (err, id) => {
           if (err) return res.status(500).json({ message: err.message });
 
           let image = null;
@@ -111,9 +134,11 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
 
           db.query(
             `INSERT INTO shopkeepers
-            (id, full_name, email, mobile, password, shop_name, shop_address, registration_no, citizenship_image)
             VALUES (?,?,?,?,?,?,?,?,?)`,
-            [id, full_name, email, mobile, hashed, shop_name, shop_address, registration_no, image],
+            [
+              id, full_name, email, mobile, hashed,
+              shop_name, shop_address, registration_no, image
+            ],
             err => {
               if (err) return res.status(500).json({ message: err.message });
               res.json({ message: "Shopkeeper registered", id });
@@ -122,7 +147,7 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
         });
       }
     });
-  } catch (e) {
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -130,94 +155,94 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
 // ================= LOGIN =================
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ message: "Email and password required" });
 
   db.query("SELECT * FROM customers WHERE email=?", [email], async (err, rows) => {
-    if (err) return res.status(500).json({ message: err.message });
-
-    if (rows.length) {
+    if (rows?.length) {
       const user = rows[0];
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) return res.status(401).json({ message: "Invalid credentials" });
+      if (!(await bcrypt.compare(password, user.password)))
+        return res.status(401).json({ message: "Invalid credentials" });
 
       const token = jwt.sign({ id: user.id, role: "customer" }, JWT_SECRET, { expiresIn: "1d" });
-      return res.json({ message: "Login successful", role: "customer", token, user });
+      return res.json({ role: "customer", token, user });
     }
 
     db.query("SELECT * FROM shopkeepers WHERE email=?", [email], async (err, rows) => {
-      if (err) return res.status(500).json({ message: err.message });
-      if (!rows.length) return res.status(404).json({ message: "Account not found" });
+      if (!rows.length) return res.status(404).json({ message: "Not found" });
 
       const user = rows[0];
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) return res.status(401).json({ message: "Invalid credentials" });
+      if (!(await bcrypt.compare(password, user.password)))
+        return res.status(401).json({ message: "Invalid credentials" });
 
       const token = jwt.sign({ id: user.id, role: "shopkeeper" }, JWT_SECRET, { expiresIn: "1d" });
-      return res.json({ message: "Login successful", role: "shopkeeper", token, user });
+      res.json({ role: "shopkeeper", token, user });
     });
   });
 });
 
-// ================= CHECK EMAIL =================
-app.post("/check-email", (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ message: "Email is required" });
+// ================= ADD PRODUCT =================
+app.post("/add-product", upload.single("image"), (req, res) => {
+  const { pname, description, category, price, discount, sizes, quantity } = req.body;
+  if (!pname || !category || !price || !sizes || !req.file)
+    return res.status(400).json({ message: "Missing product data" });
 
-  const query = `
-    SELECT email FROM customers WHERE email=?
-    UNION
-    SELECT email FROM shopkeepers WHERE email=?
+  const shop_id = "S1111"; // replace with JWT later
+
+  generateProductId((err, basePid) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const imageName = basePid + path.extname(req.file.originalname);
+    fs.renameSync(
+      path.join(uploadsDir, req.file.filename),
+      path.join(uploadsDir, imageName)
+    );
+
+    const sizeArray = Array.isArray(sizes) ? sizes : [sizes];
+
+    sizeArray.forEach(size => {
+      const pid = `${basePid}-${size}`;
+      const qty = quantity?.[size] || 0;
+
+      db.query(
+        `INSERT INTO products
+        (p_id, shop_id, pname, description, category, size, price, discount, quantity, image)
+        VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        [
+          pid, shop_id, pname, description, category,
+          size, price, discount || 0, qty, imageName
+        ]
+      );
+    });
+
+    res.json({ message: "Product added", product_id: basePid });
+  });
+});
+
+// ================= GET PRODUCTS =================
+app.get("/products", (req, res) => {
+  const sql = `
+    SELECT 
+      p_id, pname, description, category, size, price, discount, quantity, image, created_at
+    FROM products
+    WHERE quantity > 0
+    ORDER BY created_at DESC
   `;
-  db.query(query, [email, email], (err, rows) => {
+  db.query(sql, (err, rows) => {
     if (err) return res.status(500).json({ message: err.message });
-    if (rows.length === 0) return res.status(404).json({ message: "Email does not exist" });
-    res.json({ message: "Email exists" });
+    res.json(rows);
   });
 });
 
-// ================= GET USERS =================
-app.get("/users", (req, res) => {
-  db.query("SELECT id, full_name, email, mobile FROM customers", (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json(result);
-  });
-});
-
-// ================= GET IMAGES =================
-app.get("/images", (req, res) => {
-  fs.readdir(uploadsDir, (err, files) => {
-    if (err) return res.status(500).json({ message: "Cannot read uploads folder" });
-    const images = files.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file));
-    res.json(images);
-  });
-});
-
-// ================= DELETE SHOPKEEPER (SAFE FILE DELETE) =================
-app.delete("/shopkeeper/:id", (req, res) => {
-  const { id } = req.params;
-
-  db.query("SELECT citizenship_image FROM shopkeepers WHERE id=?", [id], (err, rows) => {
-    if (err) return res.status(500).json({ message: err.message });
-    if (rows.length === 0) return res.status(404).json({ message: "Shopkeeper not found" });
-
-    const fileName = rows[0].citizenship_image;
-
-    // Delete file only if it exists
-    if (fileName) {
-      const filePath = path.join(uploadsDir, fileName);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
-    db.query("DELETE FROM shopkeepers WHERE id=?", [id], (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
-      res.json({ message: "Shopkeeper deleted successfully" });
-    });
-  });
-});
 
 // ================= SERVE HTML =================
-app.get("/upload", (req, res) => res.sendFile(path.join(__dirname, "upload.html")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "index.html"))
+);
+
+app.get("/upload", (req, res) =>
+  res.sendFile(path.join(__dirname, "upload.html"))
+);
 
 // ================= START SERVER =================
-app.listen(3000, () => console.log("Server running at http://localhost:3000"));
+app.listen(3000, () =>
+  console.log("Server running at http://localhost:3000")
+);
