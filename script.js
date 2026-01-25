@@ -311,8 +311,8 @@ fetch("http://localhost:3000/products")
   .catch(err => console.error(err));
 
 // Example Add to Cart function
-// function addToCart(pid) {
-//   alert("Added to cart: " + pid);
-// }
+function addToCart(pid) {
+  alert("Added to cart: " + pid);
+ }
 
 
