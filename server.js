@@ -98,6 +98,8 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
       SELECT email FROM customers WHERE email=?
       UNION
       SELECT email FROM shopkeepers WHERE email=?
+      UNION 
+      SELECT email FROM admin WHERE email=?
     `;
 
     db.query(checkEmail, [email, email], (err, rows) => {
