@@ -178,7 +178,20 @@ if (loginForm) {
 function showProfile(user) {
   if (!user) return;
   const roleEl = document.getElementById("profileRole");
-  const role = user.id.charAt(0) === "C" ? "Customer" : "Shopkeeper";
+  // const role = user.id.charAt(0) === "C" ? "Customer" : "Shopkeeper";
+
+ let role;
+if (user.id.startsWith("C"))
+   {
+  role = "Customer";
+}
+ else if(user.id.startsWith("S"))
+{
+  role = "Shopkeeper";
+}
+  else {
+  role = "Admin";
+}
 
   if (roleEl) {
     roleEl.textContent = role;
@@ -315,4 +328,9 @@ function addToCart(pid) {
   alert("Added to cart: " + pid);
  }
 
+
+ if(profileRole==='Admin')
+{
+  document.getElementById('adminLink').style.display="block";
+}
 

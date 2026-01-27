@@ -21,11 +21,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ================= STATIC FILES =================
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+const uploadsDir = path.join(__dirname, "uploads");
+app.use("/uploads", express.static(uploadsDir));
 app.use(express.static(__dirname));
 
 // ================= UPLOADS FOLDER =================
-const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 
 // ================= MULTER CONFIG =================
@@ -65,20 +65,16 @@ function generateUserId(table, prefix, callback) {
 }
 
 function generateProductId(callback) {
-  const sql = `
-    SELECT p_id 
-    FROM products 
-    ORDER BY CAST(SUBSTRING(p_id,2) AS UNSIGNED) DESC 
-    LIMIT 1
-  `;
+  db.query(
+    `SELECT p_id FROM products ORDER BY CAST(SUBSTRING(p_id,2) AS UNSIGNED) DESC LIMIT 1`,
+    (err, rows) => {
+      if (err) return callback(err);
+      if (!rows.length) return callback(null, "P1111");
 
-  db.query(sql, (err, rows) => {
-    if (err) return callback(err);
-    if (!rows.length) return callback(null, "P1111");
-
-    const num = parseInt(rows[0].p_id.match(/\d+/)[0]) + 1;
-    callback(null, "P" + num);
-  });
+      const num = parseInt(rows[0].p_id.match(/\d+/)[0]) + 1;
+      callback(null, "P" + num);
+    }
+  );
 }
 
 // ================= SIGNUP =================
@@ -98,18 +94,20 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
       SELECT email FROM customers WHERE email=?
       UNION
       SELECT email FROM shopkeepers WHERE email=?
+      UNION 
+      SELECT email FROM admin WHERE email=?
     `;
 
-    db.query(checkEmail, [email, email], (err, rows) => {
+    db.query(checkEmail, [email, email, email], (err, rows) => {
       if (err) return res.status(500).json({ message: err.message });
       if (rows.length) return res.status(409).json({ message: "Email exists" });
 
-      if (role === "customer") {
+      if (role.toLowerCase() === "customer") {
         generateUserId("customers", "C", (err, id) => {
           if (err) return res.status(500).json({ message: err.message });
 
           db.query(
-            "INSERT INTO customers VALUES (?,?,?,?,?)",
+            "INSERT INTO customers (id, full_name, email, mobile, password) VALUES (?,?,?,?,?)",
             [id, full_name, email, mobile, hashed],
             err => {
               if (err) return res.status(500).json({ message: err.message });
@@ -119,64 +117,97 @@ app.post("/signup", upload.single("citizenship"), async (req, res) => {
         });
       }
 
-      if (role === "shopkeeper") {
+      if (role.toLowerCase() === "shopkeeper") {
         generateUserId("shopkeepers", "S", (err, id) => {
           if (err) return res.status(500).json({ message: err.message });
 
-          let image = null;
+          const shopkeeperUploads = path.join(uploadsDir, "shopkeepers");
+          if (!fs.existsSync(shopkeeperUploads)) fs.mkdirSync(shopkeeperUploads);
+
+          let imageName = null;
           if (req.file) {
-            image = id + path.extname(req.file.originalname);
-            fs.renameSync(
-              path.join(uploadsDir, req.file.filename),
-              path.join(uploadsDir, image)
-            );
+            imageName = id + path.extname(req.file.originalname);
           }
 
           db.query(
             `INSERT INTO shopkeepers
+            (id, full_name, email, mobile, password, shop_name, shop_address, registration_no, citizenship_image)
             VALUES (?,?,?,?,?,?,?,?,?)`,
             [
               id, full_name, email, mobile, hashed,
-              shop_name, shop_address, registration_no, image
+              shop_name, shop_address, registration_no, imageName
             ],
             err => {
               if (err) return res.status(500).json({ message: err.message });
+
+              if (req.file) {
+                fs.renameSync(
+                  path.join(uploadsDir, req.file.filename),
+                  path.join(shopkeeperUploads, imageName)
+                );
+              }
+
               res.json({ message: "Shopkeeper registered", id });
             }
           );
         });
       }
     });
-  } catch {
-    res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
 // ================= LOGIN =================
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  db.query("SELECT * FROM customers WHERE email=?", [email], async (err, rows) => {
-    if (rows?.length) {
-      const user = rows[0];
-      if (!(await bcrypt.compare(password, user.password)))
-        return res.status(401).json({ message: "Invalid credentials" });
+    // Check Admin
+    db.query("SELECT * FROM admin WHERE email = ?", [email], async (err, adminRows) => {
+      if (err) return res.status(500).json({ message: err.message });
 
-      const token = jwt.sign({ id: user.id, role: "customer" }, JWT_SECRET, { expiresIn: "1d" });
-      return res.json({ role: "customer", token, user });
-    }
+      if (adminRows.length) {
+        const admin = adminRows[0];
+        if (password !== admin.password)
+          return res.status(401).json({ message: "Invalid credentials" });
 
-    db.query("SELECT * FROM shopkeepers WHERE email=?", [email], async (err, rows) => {
-      if (!rows.length) return res.status(404).json({ message: "Not found" });
+        const token = jwt.sign({ email: admin.email, role: "admin" }, JWT_SECRET, { expiresIn: "1d" });
+        return res.json({ role: "admin", token, user: admin });
+      }
 
-      const user = rows[0];
-      if (!(await bcrypt.compare(password, user.password)))
-        return res.status(401).json({ message: "Invalid credentials" });
+      // Check Customers
+      db.query("SELECT * FROM customers WHERE email = ?", [email], async (err, customerRows) => {
+        if (err) return res.status(500).json({ message: err.message });
 
-      const token = jwt.sign({ id: user.id, role: "shopkeeper" }, JWT_SECRET, { expiresIn: "1d" });
-      res.json({ role: "shopkeeper", token, user });
+        if (customerRows.length) {
+          const user = customerRows[0];
+          if (!(await bcrypt.compare(password, user.password)))
+            return res.status(401).json({ message: "Invalid credentials" });
+
+          const token = jwt.sign({ id: user.id, role: "customer" }, JWT_SECRET, { expiresIn: "1d" });
+          return res.json({ role: "customer", token, user });
+        }
+
+        // Check Shopkeepers
+        db.query("SELECT * FROM shopkeepers WHERE email = ?", [email], async (err, shopRows) => {
+          if (err) return res.status(500).json({ message: err.message });
+
+          if (!shopRows.length) return res.status(404).json({ message: "User not found" });
+
+          const user = shopRows[0];
+          if (!(await bcrypt.compare(password, user.password)))
+            return res.status(401).json({ message: "Wrong password" });
+
+          const token = jwt.sign({ id: user.id, role: "shopkeeper" }, JWT_SECRET, { expiresIn: "1d" });
+          return res.json({ role: "shopkeeper", token, user });
+        });
+      });
     });
-  });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
 });
 
 // ================= ADD PRODUCT =================
@@ -185,7 +216,8 @@ app.post("/add-product", upload.single("image"), (req, res) => {
   if (!pname || !category || !price || !sizes || !req.file)
     return res.status(400).json({ message: "Missing product data" });
 
-  const shop_id = "S1111"; // replace with JWT later
+  // For now, hardcode shop_id. Later, extract from JWT
+  const shop_id = "S1111";
 
   generateProductId((err, basePid) => {
     if (err) return res.status(500).json({ message: err.message });
@@ -197,19 +229,18 @@ app.post("/add-product", upload.single("image"), (req, res) => {
     );
 
     const sizeArray = Array.isArray(sizes) ? sizes : [sizes];
+    const quantityObj = typeof quantity === "object" ? quantity : {};
 
     sizeArray.forEach(size => {
       const pid = `${basePid}-${size}`;
-      const qty = quantity?.[size] || 0;
+      const qty = parseInt(quantityObj[size]) || 0;
 
       db.query(
         `INSERT INTO products
         (p_id, shop_id, pname, description, category, size, price, discount, quantity, image)
         VALUES (?,?,?,?,?,?,?,?,?,?)`,
-        [
-          pid, shop_id, pname, description, category,
-          size, price, discount || 0, qty, imageName
-        ]
+        [pid, shop_id, pname, description, category, size, price, discount || 0, qty, imageName],
+        err => { if (err) console.error(err); }
       );
     });
 
@@ -220,8 +251,7 @@ app.post("/add-product", upload.single("image"), (req, res) => {
 // ================= GET PRODUCTS =================
 app.get("/products", (req, res) => {
   const sql = `
-    SELECT 
-      p_id, pname, description, category, size, price, discount, quantity, image, created_at
+    SELECT p_id, pname, description, category, size, price, discount, quantity, image, created_at
     FROM products
     WHERE quantity > 0
     ORDER BY created_at DESC
@@ -232,17 +262,9 @@ app.get("/products", (req, res) => {
   });
 });
 
-
 // ================= SERVE HTML =================
-app.get("/", (req, res) =>
-  res.sendFile(path.join(__dirname, "index.html"))
-);
-
-app.get("/upload", (req, res) =>
-  res.sendFile(path.join(__dirname, "upload.html"))
-);
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
+app.get("/upload", (req, res) => res.sendFile(path.join(__dirname, "upload.html")));
 
 // ================= START SERVER =================
-app.listen(3000, () =>
-  console.log("Server running at http://localhost:3000")
-);
+app.listen(3000, () => console.log("Server running at http://localhost:3000"));

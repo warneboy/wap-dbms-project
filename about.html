@@ -3,60 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Founder</title>
+  <title>Founders / Admins</title>
+
   <style>
-    body
-    {
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
       display: flex;
-      flex-direction:column;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
     }
-    .profile
-    {
-      height: 400px;
-      border: red 1px solid;
-      margin: 20px;
+
+    .profile {
+      width: 80%;
+      max-width: 800px;
+      background-color: #ffffff;
       border-radius: 20px;
       display: flex;
-      flex-direction: row;
+      align-items: center;
+      padding: 20px;
+      margin: 15px 0;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
-    img{
-      height: 250px;
-      width: 250px;
-      padding: 50px;
+
+    .profile img {
+      height: 200px;
+      width: 200px;
       border-radius: 50%;
       object-fit: cover;
+      margin-right: 30px;
+    }
+
+    .info p {
+      margin: 8px 0;
+      font-size: 16px;
+    }
+
+    .info span {
+      font-weight: bold;
+    }
+
+    .info a {
+      color: #0a66c2;
+      text-decoration: none;
+    }
+
+    .info a:hover {
+      text-decoration: underline;
     }
   </style>
-
 </head>
+
 <body>
+
+
   <div class="profile">
-    <img src="image/.jpg" alt="saugat_nepal">
-    <div id="info">
-      <p>Name: <span>Saugat Nepal</span></p>
-      <p>Gmail: <span>saugatnepal000@gmail.com</span> </p>
-      <p>Linkdein <span></span> </p>
-      <p><span></span></p>
+    <img src="image/saugat.jpg" alt="Saugat Nepal">
+    <div class="info">
+      <p><span>Name:</span> Saugat Nepal</p>
+      <p><span>Email:</span> <a href="mailto:saugaatnepal000@gmail.com">saugatnepal000@gmail.com</a></p>
+      <p><span>LinkedIn:</span> <a href="https://www.linkedin.com/in/saugat-nepal-3266a6317/" target="_blank">linkedin.com/in/saugat-nepal</a></p>
+      <p><span>GitHub:</span> <a href="https://github.com/warneboy" target="_blank">github.com/saugatnepal</a></p>
     </div>
   </div>
 
-  <div class="profile">
-    <img src="image/slesha.jpg" alt="slesha_chaudhary">
-    <div id="info">
-      <p>Name: <span>Slesha Chaudhary</span></p>
-      <p>Gmail: <span>SleshaChaudhary@gmail.com</span> </p>
-      <p><span></span></p>
-    </div>
-   </div>
 
-  </div><div class="profile">
-    <img src="image/bigyata.jpg" alt="bigyata_ghimire">
-    <div id="info">
-      <p>Name: <span>Bigyata Ghimire</span></p>
-      <p>Gmail: <span>BigyataGhimire@gmail.com</span> </p>
-      <p><span></span></p>
+  <div class="profile">
+    <img src="image/slesha.jpg" alt="Slesha Chaudhary">
+    <div class="info">
+      <p><span>Name:</span> Slesha Chaudhary</p>
+      <p><span>Email:</span> <a href="mailto:sleshachaudhary0@gmail.com">sleshachaudhary@gmail.com</a></p>
+      <p><span>LinkedIn:</span> <a href="https://www.linkedin.com/in/slesha-chaudhary-115488317/" target="_blank">linkedin.com/in/slesha-chaudhary</a></p>
+      <p><span>GitHub:</span> <a href="https://github.com/slay-shaa" target="_blank">github.com/sleshachaudhary</a></p>
     </div>
   </div>
 
+
+  <div class="profile">
+    <img src="image/bigyata.jpg" alt="Bigyata Ghimire">
+    <div class="info">
+      <p><span>Name:</span> Bigyata Ghimire</p>
+      <p><span>Email:</span> <a href="mailto:bigyataghimire@gmail.com">bigyataghimire@gmail.com</a></p>
+      <p><span>LinkedIn:</span> <a href="https://www.linkedin.com/in/bigyata-ghimire-655a442a6/" target="_blank">linkedin.com/in/bigyata-ghimire</a></p>
+      <p><span>GitHub:</span> <a href="https://github.com/bigyataghimire" target="_blank">github.com/bigyataghimire</a></p>
+    </div>
+  </div>
+ 
 </body>
 </html>
