@@ -37,7 +37,7 @@
 
   <ul class="nav-links">
     <li><a href="about.html">About</a></li>
-    <li><a href="#">Cart</a></li>
+    <li><a href="cart.html">Cart</a></li>
     <li id="loginNav"><a onclick="openLogin()">Login</a></li>
 
     <li class="user-dropdown" id="userNav" style="display:none;">
@@ -181,6 +181,38 @@
 
       <button class="signup-btn">Signup</button>
     </form>
+  </div>
+</div>
+
+<!-- UNAUTHORIZED ADD TO CART MODAL -->
+<div id="unauthModal" style="
+  display:none;
+  position:fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+">
+  <div style="
+    background:#fff;
+    padding:20px;
+    border-radius:8px;
+    text-align:center;
+    max-width:400px;
+    width:90%;
+    box-shadow:0 0 10px rgba(0,0,0,0.5);
+  ">
+    <h2>Access Denied 🚫</h2>
+    <p>Only customers can add products to cart.</p>
+    <button onclick="closeUnauthModal()" style="
+      padding:10px 20px;
+      background:#007bff;
+      color:#fff;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+    ">Close</button>
   </div>
 </div>
 

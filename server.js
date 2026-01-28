@@ -1,270 +1,319 @@
-import express from "express";
-import mysql from "mysql2";
-import cors from "cors";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+// ======================= BANNER CAROUSEL =======================
+const bannerTrack = document.getElementById("bannerTrack");
+const totalSlides = bannerTrack ? bannerTrack.children.length : 0;
+let index = 0;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+function updateSlide() {
+  if (!bannerTrack) return;
+  bannerTrack.style.transform = `translateX(-${index * 100}%)`;
+}
 
-const app = express();
-const JWT_SECRET = "supersecretkey";
+function nextSlide() {
+  index = (index + 1) % totalSlides;
+  updateSlide();
+}
 
-// ================= MIDDLEWARE =================
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+function prevSlide() {
+  index = (index - 1 + totalSlides) % totalSlides;
+  updateSlide();
+}
 
-// ================= STATIC FILES =================
-const uploadsDir = path.join(__dirname, "uploads");
-app.use("/uploads", express.static(uploadsDir));
-app.use(express.static(__dirname));
+if (totalSlides > 0) setInterval(nextSlide, 4000);
 
-// ================= UPLOADS FOLDER =================
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+// ======================= MODAL CONTROLS =======================
+function openLogin() {
+  document.getElementById("loginPopup").style.display = "flex";
+  document.getElementById("loginEmail").focus();
+}
 
-// ================= MULTER CONFIG =================
-const storage = multer.diskStorage({
-  destination: uploadsDir,
-  filename: (req, file, cb) => {
-    cb(null, "temp_" + Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
+function closeLogin() {
+  const loginPopup = document.getElementById("loginPopup");
+  if (loginPopup) loginPopup.style.display = "none";
+  const loginForm = document.getElementById("loginForm");
+  if (loginForm) loginForm.reset();
+  const loginError = document.getElementById("loginError");
+  if (loginError) loginError.textContent = "";
+}
 
-// ================= MYSQL CONNECTION =================
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "Nprotter@123",
-  database: "dreambasket"
-});
+function openSignup() {
+  document.getElementById("signupPopup").style.display = "flex";
+}
 
-db.connect(err => {
-  if (err) throw err;
-  console.log("MySQL Connected");
-});
+function closeSignup() {
+  const signupPopup = document.getElementById("signupPopup");
+  if (signupPopup) signupPopup.style.display = "none";
+  const signupForm = document.getElementById("signupForm");
+  if (signupForm) signupForm.reset();
+  const errorMsg = document.getElementById("errorMsg");
+  const successMsg = document.getElementById("successMsg");
+  if (errorMsg) errorMsg.textContent = "";
+  if (successMsg) successMsg.textContent = "";
+  const password = document.getElementById("password");
+  const confirmPassword = document.getElementById("confirm_password");
+  if (password) password.classList.remove("error", "valid");
+  if (confirmPassword) confirmPassword.classList.remove("error", "valid");
+}
 
-// ================= ID GENERATORS =================
-function generateUserId(table, prefix, callback) {
-  db.query(
-    `SELECT id FROM ${table} ORDER BY CAST(SUBSTRING(id,2) AS UNSIGNED) DESC LIMIT 1`,
-    (err, rows) => {
-      if (err) return callback(err);
-      if (!rows.length) return callback(null, prefix === "C" ? "C11111" : "S1111");
+function switchToSignup() {
+  closeLogin();
+  openSignup();
+}
 
-      const next = parseInt(rows[0].id.substring(1)) + 1;
-      callback(null, prefix + next);
-    }
+// ======================= SHOPKEEPER FIELDS =======================
+const roleSelect = document.getElementById("role");
+const shopFields = document.querySelectorAll(".shopkeeper-fields");
+
+function toggleShopkeeperFields() {
+  if (!roleSelect) return;
+  shopFields.forEach(el =>
+    el.style.display = roleSelect.value === "shopkeeper" ? "block" : "none"
   );
 }
 
-function generateProductId(callback) {
-  db.query(
-    `SELECT p_id FROM products ORDER BY CAST(SUBSTRING(p_id,2) AS UNSIGNED) DESC LIMIT 1`,
-    (err, rows) => {
-      if (err) return callback(err);
-      if (!rows.length) return callback(null, "P1111");
-
-      const num = parseInt(rows[0].p_id.match(/\d+/)[0]) + 1;
-      callback(null, "P" + num);
-    }
-  );
+if (roleSelect) {
+  toggleShopkeeperFields();
+  roleSelect.addEventListener("change", toggleShopkeeperFields);
 }
 
-// ================= SIGNUP =================
-app.post("/signup", upload.single("citizenship"), async (req, res) => {
-  try {
-    const {
-      role, full_name, email, mobile,
-      password, shop_name, shop_address, registration_no
-    } = req.body;
+// ======================= PASSWORD VALIDATION =======================
+const password = document.getElementById("password");
+const confirmPassword = document.getElementById("confirm_password");
+const errorMsg = document.getElementById("errorMsg");
+const successMsg = document.getElementById("successMsg");
 
-    if (!role || !full_name || !email || !password)
-      return res.status(400).json({ message: "Missing fields" });
+function validatePassword() {
+  if (!confirmPassword || !password) return true;
+  if (confirmPassword.value === "") return true;
+  if (password.value !== confirmPassword.value) {
+    confirmPassword.classList.add("error");
+    if (errorMsg) errorMsg.textContent = "Passwords do not match";
+    return false;
+  }
+  confirmPassword.classList.remove("error");
+  if (errorMsg) errorMsg.textContent = "";
+  return true;
+}
 
-    const hashed = await bcrypt.hash(password, 10);
+if (password && confirmPassword) {
+  password.addEventListener("input", validatePassword);
+  confirmPassword.addEventListener("input", validatePassword);
+}
 
-    const checkEmail = `
-      SELECT email FROM customers WHERE email=?
-      UNION
-      SELECT email FROM shopkeepers WHERE email=?
-      UNION 
-      SELECT email FROM admin WHERE email=?
-    `;
+// ======================= SIGNUP SUBMIT =======================
+const signupForm = document.getElementById("signupForm");
+if (signupForm) {
+  signupForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!validatePassword()) return;
 
-    db.query(checkEmail, [email, email, email], (err, rows) => {
-      if (err) return res.status(500).json({ message: err.message });
-      if (rows.length) return res.status(409).json({ message: "Email exists" });
+    if (errorMsg) errorMsg.textContent = "";
+    if (successMsg) successMsg.textContent = "";
 
-      if (role.toLowerCase() === "customer") {
-        generateUserId("customers", "C", (err, id) => {
-          if (err) return res.status(500).json({ message: err.message });
+    try {
+      const res = await fetch("/signup", {
+        method: "POST",
+        body: new FormData(e.target)
+      });
+      const data = await res.json();
 
-          db.query(
-            "INSERT INTO customers (id, full_name, email, mobile, password) VALUES (?,?,?,?,?)",
-            [id, full_name, email, mobile, hashed],
-            err => {
-              if (err) return res.status(500).json({ message: err.message });
-              res.json({ message: "Customer registered", id });
-            }
-          );
-        });
+      if (!res.ok) {
+        if (errorMsg) errorMsg.textContent = data.message;
+        return;
       }
 
-      if (role.toLowerCase() === "shopkeeper") {
-        generateUserId("shopkeepers", "S", (err, id) => {
-          if (err) return res.status(500).json({ message: err.message });
+      if (successMsg) successMsg.textContent = "🎉 Registered successfully! Redirecting...";
+      setTimeout(() => {
+        closeSignup();
+        openLogin();
+      }, 2000);
 
-          const shopkeeperUploads = path.join(uploadsDir, "shopkeepers");
-          if (!fs.existsSync(shopkeeperUploads)) fs.mkdirSync(shopkeeperUploads);
+    } catch {
+      if (errorMsg) errorMsg.textContent = "Server error. Try again.";
+    }
+  });
+}
 
-          let imageName = null;
-          if (req.file) {
-            imageName = id + path.extname(req.file.originalname);
-          }
+// ======================= LOGIN SUBMIT =======================
+const loginForm = document.getElementById("loginForm");
+const loginError = document.getElementById("loginError");
 
-          db.query(
-            `INSERT INTO shopkeepers
-            (id, full_name, email, mobile, password, shop_name, shop_address, registration_no, citizenship_image)
-            VALUES (?,?,?,?,?,?,?,?,?)`,
-            [
-              id, full_name, email, mobile, hashed,
-              shop_name, shop_address, registration_no, imageName
-            ],
-            err => {
-              if (err) return res.status(500).json({ message: err.message });
+if (loginForm) {
+  loginForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (loginError) loginError.textContent = "";
 
-              if (req.file) {
-                fs.renameSync(
-                  path.join(uploadsDir, req.file.filename),
-                  path.join(shopkeeperUploads, imageName)
-                );
-              }
+    const email = document.getElementById("loginEmail").value;
+    const passwordValue = document.getElementById("loginPassword").value;
 
-              res.json({ message: "Shopkeeper registered", id });
-            }
-          );
-        });
+    try {
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: passwordValue })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        if (loginError) loginError.textContent = data.message;
+        return;
       }
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
+
+      // Save to localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      showProfile(data.user);
+      document.getElementById("loginNav").style.display = "none";
+      document.getElementById("userNav").style.display = "block";
+
+      closeLogin();
+    } catch {
+      if (loginError) loginError.textContent = "Server error. Try again.";
+    }
+  });
+}
+
+// ======================= PROFILE DISPLAY =======================
+function showProfile(user) {
+  if (!user) return;
+  const roleEl = document.getElementById("profileRole");
+
+  let role;
+  if (user.id.startsWith("C")) role = "Customer";
+  else if(user.id.startsWith("S")) role = "Shopkeeper";
+  else role = "Admin";
+
+  if (roleEl) {
+    roleEl.textContent = role;
+    roleEl.style.display = "inline-block";
+  }
+
+  document.getElementById("userName").textContent = user.full_name || "";
+  document.getElementById("userPhone").textContent = "+977 " + (user.mobile || "");
+  document.getElementById("userEmail").textContent = user.email || "";
+
+  const uploadLink = document.getElementById("uploadLink");
+  if (uploadLink) uploadLink.style.display = role === "Shopkeeper" ? "block" : "none";
+
+  const adminLink = document.getElementById("adminLink");
+  if (adminLink) adminLink.style.display = role === "Admin" ? "block" : "none";
+}
+
+// ======================= AUTO LOAD AFTER REFRESH =======================
+window.addEventListener("load", () => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (user) {
+    showProfile(user);
+    document.getElementById("loginNav").style.display = "none";
+    document.getElementById("userNav").style.display = "block";
+
+    const loginPopup = document.getElementById("loginPopup");
+    const signupPopup = document.getElementById("signupPopup");
+    if (loginPopup) loginPopup.style.display = "none";
+    if (signupPopup) signupPopup.style.display = "none";
+  } else {
+    document.getElementById("loginNav").style.display = "block";
+    document.getElementById("userNav").style.display = "none";
   }
 });
 
-// ================= LOGIN =================
-app.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+// ======================= LOGOUT =======================
+function logout() {
+  localStorage.clear();
+  document.getElementById("userNav").style.display = "none";
+  document.getElementById("loginNav").style.display = "block";
 
-    // Check Admin
-    db.query("SELECT * FROM admin WHERE email = ?", [email], async (err, adminRows) => {
-      if (err) return res.status(500).json({ message: err.message });
+  const signupPopup = document.getElementById("signupPopup");
+  if (signupPopup) signupPopup.style.display = "none";
 
-      if (adminRows.length) {
-        const admin = adminRows[0];
-        if (password !== admin.password)
-          return res.status(401).json({ message: "Invalid credentials" });
+  const loginPopup = document.getElementById("loginPopup");
+  if (loginPopup) loginPopup.style.display = "flex";
+  const loginEmail = document.getElementById("loginEmail");
+  if (loginEmail) loginEmail.focus();
+}
 
-        const token = jwt.sign({ email: admin.email, role: "admin" }, JWT_SECRET, { expiresIn: "1d" });
-        return res.json({ role: "admin", token, user: admin });
-      }
+// ======================= LOAD PRODUCTS =======================
+document.addEventListener("DOMContentLoaded", loadProducts);
 
-      // Check Customers
-      db.query("SELECT * FROM customers WHERE email = ?", [email], async (err, customerRows) => {
-        if (err) return res.status(500).json({ message: err.message });
+function loadProducts() {
+  fetch("http://localhost:3000/products")
+    .then(res => res.json())
+    .then(products => {
+      const grid = document.getElementById("productsGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
 
-        if (customerRows.length) {
-          const user = customerRows[0];
-          if (!(await bcrypt.compare(password, user.password)))
-            return res.status(401).json({ message: "Invalid credentials" });
+      products.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "product-card";
 
-          const token = jwt.sign({ id: user.id, role: "customer" }, JWT_SECRET, { expiresIn: "1d" });
-          return res.json({ role: "customer", token, user });
+        const finalPrice = p.price - (p.price * p.discount) / 100;
+
+        card.innerHTML = `
+          <img src="http://localhost:3000/uploads/${p.image}" alt="${p.pname}">
+          <h3>${p.pname}</h3>
+          <p>${p.description || "No description"}</p>
+          <p><b>Size:</b> ${p.size}</p>
+          <p><b>Price:</b> ₹${finalPrice.toFixed(2)}</p>
+          <p><b>Quantity:</b> <span class="product-quantity">${p.quantity}</span></p>
+        `;
+
+        const btn = document.createElement("button");
+        const quantityText = p.quantity;
+
+        if (quantityText > 0) {
+          btn.textContent = "Add to Cart";
+          btn.onclick = () => addToCart(p);
+        } else {
+          btn.textContent = "Out of Stock";
+          btn.disabled = true;
         }
 
-        // Check Shopkeepers
-        db.query("SELECT * FROM shopkeepers WHERE email = ?", [email], async (err, shopRows) => {
-          if (err) return res.status(500).json({ message: err.message });
-
-          if (!shopRows.length) return res.status(404).json({ message: "User not found" });
-
-          const user = shopRows[0];
-          if (!(await bcrypt.compare(password, user.password)))
-            return res.status(401).json({ message: "Wrong password" });
-
-          const token = jwt.sign({ id: user.id, role: "shopkeeper" }, JWT_SECRET, { expiresIn: "1d" });
-          return res.json({ role: "shopkeeper", token, user });
-        });
+        card.appendChild(btn);
+        grid.appendChild(card);
       });
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    })
+    .catch(err => console.error(err));
+}
+
+// ======================= ADD TO CART FUNCTION =======================
+function addToCart(product) {
+  const role = localStorage.getItem("role");
+
+  if (!role) {
+    alert("Please login as a customer to add products to cart.");
+    return;
   }
-});
 
-// ================= ADD PRODUCT =================
-app.post("/add-product", upload.single("image"), (req, res) => {
-  const { pname, description, category, price, discount, sizes, quantity } = req.body;
-  if (!pname || !category || !price || !sizes || !req.file)
-    return res.status(400).json({ message: "Missing product data" });
+  if (role !== "customer") {
+    alert("Only customers can add products to cart.");
+    return;
+  }
 
-  // For now, hardcode shop_id. Later, extract from JWT
-  const shop_id = "S1111";
+  // Retrieve cart from localStorage
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-  generateProductId((err, basePid) => {
-    if (err) return res.status(500).json({ message: err.message });
+  // Check if product already exists
+  const exists = cart.find(item => item.p_id === product.p_id);
+  if (exists) {
+    alert("Product already in cart.");
+    return;
+  }
 
-    const imageName = basePid + path.extname(req.file.originalname);
-    fs.renameSync(
-      path.join(uploadsDir, req.file.filename),
-      path.join(uploadsDir, imageName)
-    );
-
-    const sizeArray = Array.isArray(sizes) ? sizes : [sizes];
-    const quantityObj = typeof quantity === "object" ? quantity : {};
-
-    sizeArray.forEach(size => {
-      const pid = `${basePid}-${size}`;
-      const qty = parseInt(quantityObj[size]) || 0;
-
-      db.query(
-        `INSERT INTO products
-        (p_id, shop_id, pname, description, category, size, price, discount, quantity, image)
-        VALUES (?,?,?,?,?,?,?,?,?,?)`,
-        [pid, shop_id, pname, description, category, size, price, discount || 0, qty, imageName],
-        err => { if (err) console.error(err); }
-      );
-    });
-
-    res.json({ message: "Product added", product_id: basePid });
+  cart.push({
+    p_id: product.p_id,
+    pname: product.pname,
+    price: parseFloat(product.price - (product.price * product.discount)/100),
+    size: product.size,
+    image: product.image,
+    quantity: 1
   });
-});
 
-// ================= GET PRODUCTS =================
-app.get("/products", (req, res) => {
-  const sql = `
-    SELECT p_id, pname, description, category, size, price, discount, quantity, image, created_at
-    FROM products
-    WHERE quantity > 0
-    ORDER BY created_at DESC
-  `;
-  db.query(sql, (err, rows) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json(rows);
-  });
-});
+  localStorage.setItem("cart", JSON.stringify(cart));
 
-// ================= SERVE HTML =================
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
-app.get("/upload", (req, res) => res.sendFile(path.join(__dirname, "upload.html")));
+  alert(`${product.pname} added to cart!`);
 
-// ================= START SERVER =================
-app.listen(3000, () => console.log("Server running at http://localhost:3000"));
+  // Redirect to cart page
+  window.location.href = "cart.html";
+}

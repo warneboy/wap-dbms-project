@@ -325,8 +325,36 @@ fetch("http://localhost:3000/products")
 
 // Example Add to Cart function
 function addToCart(pid) {
-  alert("Added to cart: " + pid);
- }
+  // Get user info from localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    // No user logged in
+    alert("Please login to add products to cart.");
+    return;
+  }
+
+  const userId = user.id;
+
+  // Check if user is Shopkeeper or Admin
+  if (userId.startsWith("S") || userId.startsWith("A")) {
+    // Show unauthorized modal
+    const modal = document.getElementById("unauthModal");
+    if (modal) modal.style.display = "flex";
+    return;
+  }
+
+  // If customer, proceed to add to cart
+  // You can implement your cart logic here or redirect to cart.html
+  window.location.href = `cart.html?add=${pid}`;
+}
+
+// Function to close the unauthorized modal
+function closeUnauthModal() {
+  const modal = document.getElementById("unauthModal");
+  if (modal) modal.style.display = "none";
+}
+
 
 
  if(profileRole==='Admin')
