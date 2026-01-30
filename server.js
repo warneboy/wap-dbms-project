@@ -1716,3 +1716,23 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 });
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled Rejection:', error);
+});
+
+// Use Render's PORT or default to 3000
+const aPORT = process.env.PORT || 3000;
+
+// Start server with error handling
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${aPORT}`);
+  console.log(`✅ Environment: ${process.env.NODE_ENV}`);
+}).on('error', (err) => {
+  console.error('Server failed to start:', err);
+  process.exit(1);
+});
