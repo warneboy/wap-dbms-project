@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Dashboard - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            padding-top: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .table-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .table-card h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-pending { background-color: #ffeb3b; color: #333; }
+        .status-approved { background-color: #4caf50; color: white; }
+        .status-rejected { background-color: #f44336; color: white; }
+        .status-processing { background-color: #2196f3; color: white; }
+        .status-shipped { background-color: #9c27b0; color: white; }
+        .status-delivered { background-color: #009688; color: white; }
+        .status-cancelled { background-color: #607d8b; color: white; }
+        
+        .action-btn {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            font-size: 0.8rem;
+            margin: 0 2px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .btn-approve { background-color: #27ae60; color: white; }
+        .btn-reject { background-color: #e74c3c; color: white; }
+        .btn-view { background-color: #3498db; color: white; }
+        .btn-delete { background-color: #c0392b; color: white; }
+        
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #495057;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-right: 10px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #3498db;
+            background-color: transparent;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            background-color: #2980b9;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .refresh-btn {
+            padding: 8px 16px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            float: right;
+        }
+        
+        .refresh-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .badge-success { background-color: #28a745; }
+        .badge-warning { background-color: #ffc107; }
+        .badge-danger { background-color: #dc3545; }
+        
+        .img-thumbnail {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+            }
+            
+            .table-card {
+                padding: 15px;
+            }
+            
+            .back-btn {
+                position: relative;
+                top: 0;
+                left: 0;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <a href="index.html" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+        
+        <div class="header">
+            <h1><i class="fas fa-table"></i> Database Tables Dashboard</h1>
+            <p class="mb-0">Admin View - All Database Tables</p>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="shopkeepers-tab" data-bs-toggle="tab" data-bs-target="#shopkeepers" type="button" role="tab">Shopkeepers</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers" type="button" role="tab">Customers</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab">Products</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">Orders</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="shopkeeper-orders-tab" data-bs-toggle="tab" data-bs-target="#shopkeeper-orders" type="button" role="tab">Shopkeeper Orders</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cart-tab" data-bs-toggle="tab" data-bs-target="#cart" type="button" role="tab">Cart</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="order-items-tab" data-bs-toggle="tab" data-bs-target="#order-items" type="button" role="tab">Order Items</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">History</button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content" id="myTabContent">
+            
+            <!-- Shopkeepers Tab -->
+            <div class="tab-pane fade show active" id="shopkeepers" role="tabpanel">
+                <div class="table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="fas fa-store"></i> Shopkeepers Table</h3>
+                        <button class="refresh-btn" onclick="loadShopkeepers()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="shopkeepers-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Mobile</th>
+                                    <th>Shop Name</th>
+                                    <th>Shop Address</th>
+                                    <th>Reg No</th>
+                                    <th>Status</th>
+                                    <th>Verified</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shopkeepers-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customers Tab -->
+            <div class="tab-pane fade" id="customers" role="tabpanel">
+                <div class="table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="fas fa-users"></i> Customers Table</h3>
+                        <button class="refresh-btn" onclick="loadCustomers()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="customers-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Mobile</th>
+                                    <th>Total Orders</th>
+                                    <th>Total Spent</th>
+                                    <th>Last Order</th>
+                                    <th>Registered</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Tab -->
+            <div class="tab-pane fade" id="products" role="tabpanel">
+                <div class="table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="fas fa-box"></i> Products Table</h3>
+                        <button class="refresh-btn" onclick="loadProducts()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="products-table">
+                            <thead>
+                                <tr>
+                                    <th>Product ID</th>
+                                    <th>Image</th>
+                                    <th>Product Name</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Discount</th>
+                                    <th>Stock</th>
+                                    <th>Times Ordered</th>
+                                    <th>Total Sold</th>
+                                    <th>Shopkeeper</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Orders Tab -->
+            <div class="tab-pane fade" id="orders" role="tabpanel">
+                <div class="table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="fas fa-shopping-cart"></i> Orders Table</h3>
+                        <button class="refresh-btn" onclick="loadOrders()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Items</th>
+                                    <th>Shopkeepers</th>
+                                    <th>Address</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Shopkeeper Orders Tab -->
+            <div class="tab-pane fade" id="shopkeeper-orders" role="tabpanel">
+                <div class="table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="fas fa-truck"></i> Shopkeeper Orders Table</h3>
+                        <button class="refresh-btn" onclick="loadShopkeeperOrders()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="shopkeeper-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Order ID</th>
+                                    <th>Product</th>
+                                    <th>Shopkeeper</th>
+                                    <th>Customer</th>
+                                    <th>Qty</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shopkeeper-orders-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cart Tab -->
+            <div class="tab-pane fade" id="cart" role="tabpanel">
+                <div class="table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="fas fa-shopping-bag"></i> Cart Table</h3>
+                        <button class="refresh-btn" onclick="loadCartItems()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="cart-table">
+                            <thead>
+                                <tr>
+                                    <th>Cart ID</th>
+                                    <th>Customer</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Discount</th>
+                                    <th>Category</th>
+                                    <th>Added At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cart-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Items Tab -->
+            <div class="tab-pane fade" id="order-items" role="tabpanel">
+                <div class="table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="fas fa-list"></i> Order Items Table</h3>
+                        <button class="refresh-btn" onclick="loadOrderItems()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="order-items-table">
+                            <thead>
+                                <tr>
+                                    <th>Item ID</th>
+                                    <th>Order ID</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Subtotal</th>
+                                    <th>Category</th>
+                                    <th>Shopkeeper</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-items-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- History Tab -->
+            <div class="tab-pane fade" id="history" role="tabpanel">
+                <div class="table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="fas fa-history"></i> Order Status History</h3>
+                        <button class="refresh-btn" onclick="loadOrderHistory()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="history-table">
+                            <thead>
+                                <tr>
+                                    <th>History ID</th>
+                                    <th>Order ID</th>
+                                    <th>Shopkeeper</th>
+                                    <th>Status</th>
+                                    <th>Note</th>
+                                    <th>Updated By</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
+        
+        if (!user || !token || !user.id.startsWith('A')) {
+            alert('Admin access required!');
+            window.location.href = 'index.html';
+        }
+        
+        const API_BASE = window.location.origin;
+        
+        // ======================= LOAD FUNCTIONS =======================
+        
+        async function loadShopkeepers() {
+            try {
+                console.log('Loading shopkeepers...');
+                const response = await fetch(`${API_BASE}/api/admin/shopkeepers`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Shopkeepers data:', data);
+                
+                const tbody = document.getElementById('shopkeepers-body');
+                
+                if (!response.ok) {
+                    tbody.innerHTML = `<tr><td colspan="11" class="text-center text-danger">Error loading shopkeepers: ${data.message || response.status}</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (!data.shopkeepers || data.shopkeepers.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted">No shopkeepers found</td></tr>`;
+                    return;
+                }
+                
+                data.shopkeepers.forEach(shopkeeper => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${shopkeeper.id}</td>
+                        <td>${shopkeeper.full_name}</td>
+                        <td>${shopkeeper.email}</td>
+                        <td>${shopkeeper.mobile}</td>
+                        <td><strong>${shopkeeper.shop_name}</strong></td>
+                        <td>${shopkeeper.shop_address ? shopkeeper.shop_address.substring(0, 30) + (shopkeeper.shop_address.length > 30 ? '...' : '') : 'No address'}</td>
+                        <td>${shopkeeper.registration_no}</td>
+                        <td><span class="status-badge status-${shopkeeper.status}">${shopkeeper.status}</span></td>
+                        <td>${shopkeeper.verified ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>'}</td>
+                        <td>${shopkeeper.created_at_formatted ? new Date(shopkeeper.created_at_formatted).toLocaleString() : new Date(shopkeeper.created_at).toLocaleString()}</td>
+                        <td>
+                            ${shopkeeper.status === 'pending' ? `
+                                <button class="action-btn btn-approve" onclick="approveShopkeeper('${shopkeeper.id}')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="action-btn btn-reject" onclick="rejectShopkeeper('${shopkeeper.id}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
+                            <button class="action-btn btn-delete" onclick="deleteShopkeeper('${shopkeeper.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading shopkeepers:', error);
+                document.getElementById('shopkeepers-body').innerHTML = 
+                    `<tr><td colspan="11" class="text-center text-danger">Network error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function loadCustomers() {
+            try {
+                console.log('Loading customers...');
+                const response = await fetch(`${API_BASE}/api/admin/customers`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Customers response status:', response.status);
+                const data = await response.json();
+                console.log('Customers data:', data);
+                
+                const tbody = document.getElementById('customers-body');
+                
+                if (!response.ok) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error loading customers: ${data.message || response.status}</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (!data.customers || data.customers.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No customers found</td></tr>`;
+                    return;
+                }
+                
+                data.customers.forEach(customer => {
+                    const lastOrder = customer.last_order_date ? new Date(customer.last_order_date).toLocaleDateString() : 'No orders yet';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${customer.id}</td>
+                        <td>${customer.full_name}</td>
+                        <td>${customer.email}</td>
+                        <td>${customer.mobile}</td>
+                        <td>${customer.total_orders || 0}</td>
+                        <td>Rs. ${customer.total_spent || 0}</td>
+                        <td>${lastOrder}</td>
+                        <td>${customer.created_at_formatted ? new Date(customer.created_at_formatted).toLocaleString() : new Date(customer.created_at).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                document.getElementById('customers-body').innerHTML = 
+                    `<tr><td colspan="8" class="text-center text-danger">Network error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function loadProducts() {
+            try {
+                console.log('Loading products...');
+                const response = await fetch(`${API_BASE}/api/admin/products`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Products response status:', response.status);
+                const data = await response.json();
+                console.log('Products data:', data);
+                
+                const tbody = document.getElementById('products-body');
+                
+                if (!response.ok) {
+                    tbody.innerHTML = `<tr><td colspan="12" class="text-center text-danger">Error loading products: ${data.message || response.status}</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (!data.products || data.products.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted">No products found</td></tr>`;
+                    return;
+                }
+                
+                data.products.forEach(product => {
+                    const finalPrice = product.price - (product.price * product.discount / 100);
+                    const stockClass = product.quantity > 20 ? 'badge-success' : product.quantity > 5 ? 'badge-warning' : 'badge-danger';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${product.p_id}</td>
+                        <td>
+                            <img src="${API_BASE}/uploads/${product.image || 'default.jpg'}" 
+                                 alt="${product.pname}" 
+                                 class="img-thumbnail"
+                                 onerror="this.src='image/default-product.jpg'">
+                        </td>
+                        <td>
+                            <strong>${product.pname}</strong><br>
+                            <small class="text-muted">${product.description ? product.description.substring(0, 50) + (product.description.length > 50 ? '...' : '') : 'No description'}</small>
+                        </td>
+                        <td>${product.category}</td>
+                        <td>
+                            <div class="text-danger">Rs. ${finalPrice.toFixed(2)}</div>
+                            <small class="text-muted"><s>Rs. ${product.price}</s></small>
+                        </td>
+                        <td>${product.discount}%</td>
+                        <td>
+                            <span class="badge ${stockClass}">
+                                ${product.quantity} units
+                            </span>
+                        </td>
+                        <td>${product.times_ordered || 0}</td>
+                        <td>${product.total_sold || 0}</td>
+                        <td>${product.shop_name || product.shopkeeper_id}</td>
+                        <td>${product.created_at_formatted ? new Date(product.created_at_formatted).toLocaleString() : new Date(product.created_at).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('products-body').innerHTML = 
+                    `<tr><td colspan="12" class="text-center text-danger">Network error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function loadOrders() {
+            try {
+                console.log('Loading orders...');
+                const response = await fetch(`${API_BASE}/api/admin/orders`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Orders response status:', response.status);
+                const data = await response.json();
+                console.log('Orders data:', data);
+                
+                const tbody = document.getElementById('orders-body');
+                
+                if (!response.ok) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Error loading orders: ${data.message || response.status}</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (!data.orders || data.orders.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">No orders found</td></tr>`;
+                    return;
+                }
+                
+                data.orders.forEach(order => {
+                    const paymentClass = order.payment_status === 'paid' ? 'badge-success' : 'badge-warning';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${order.order_id}</strong></td>
+                        <td>${order.customer_name || order.customer_id}</td>
+                        <td>Rs. ${order.total_amount}</td>
+                        <td><span class="status-badge status-${order.status}">${order.status}</span></td>
+                        <td><span class="badge ${paymentClass}">${order.payment_status}</span></td>
+                        <td>${order.items_count || 0}</td>
+                        <td>${order.shopkeepers_count || 0}</td>
+                        <td>${order.shipping_address ? order.shipping_address.substring(0, 30) + (order.shipping_address.length > 30 ? '...' : '') : 'No address'}</td>
+                        <td>${order.created_at_formatted ? new Date(order.created_at_formatted).toLocaleString() : new Date(order.created_at).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                document.getElementById('orders-body').innerHTML = 
+                    `<tr><td colspan="9" class="text-center text-danger">Network error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function loadShopkeeperOrders() {
+            try {
+                console.log('Loading shopkeeper orders...');
+                const response = await fetch(`${API_BASE}/api/admin/shopkeeper-orders`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Shopkeeper orders response status:', response.status);
+                const data = await response.json();
+                console.log('Shopkeeper orders data:', data);
+                
+                const tbody = document.getElementById('shopkeeper-orders-body');
+                
+                if (!response.ok) {
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">Error loading shopkeeper orders: ${data.message || response.status}</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (!data.orders || data.orders.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted">No shopkeeper orders found</td></tr>`;
+                    return;
+                }
+                
+                data.orders.forEach(order => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${order.id}</td>
+                        <td>${order.order_id}</td>
+                        <td>${order.product_name || order.product_id}</td>
+                        <td>${order.shopkeeper_name || order.shopkeeper_id}</td>
+                        <td>${order.customer_name || order.customer_id}</td>
+                        <td>${order.quantity}</td>
+                        <td>Rs. ${order.unit_price}</td>
+                        <td>Rs. ${order.subtotal}</td>
+                        <td><span class="status-badge status-${order.status}">${order.status}</span></td>
+                        <td>${order.created_at_formatted ? new Date(order.created_at_formatted).toLocaleString() : new Date(order.created_at).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading shopkeeper orders:', error);
+                document.getElementById('shopkeeper-orders-body').innerHTML = 
+                    `<tr><td colspan="10" class="text-center text-danger">Network error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function loadCartItems() {
+            try {
+                console.log('Loading cart items...');
+                const response = await fetch(`${API_BASE}/api/admin/cart`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Cart response status:', response.status);
+                const data = await response.json();
+                console.log('Cart data:', data);
+                
+                const tbody = document.getElementById('cart-body');
+                
+                if (!response.ok) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error loading cart items: ${data.message || response.status}</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (!data.items || data.items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No cart items found</td></tr>`;
+                    return;
+                }
+                
+                data.items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.cart_id}</td>
+                        <td>${item.customer_name || item.customer_id}</td>
+                        <td>${item.product_name || item.product_id}</td>
+                        <td>${item.quantity}</td>
+                        <td>Rs. ${item.product_price || 0}</td>
+                        <td>${item.product_discount || 0}%</td>
+                        <td>${item.product_category || 'N/A'}</td>
+                        <td>${item.added_at_formatted ? new Date(item.added_at_formatted).toLocaleString() : new Date(item.added_at).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading cart items:', error);
+                document.getElementById('cart-body').innerHTML = 
+                    `<tr><td colspan="8" class="text-center text-danger">Network error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function loadOrderItems() {
+            try {
+                console.log('Loading order items...');
+                const response = await fetch(`${API_BASE}/api/admin/order-items`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Order items response status:', response.status);
+                const data = await response.json();
+                console.log('Order items data:', data);
+                
+                const tbody = document.getElementById('order-items-body');
+                
+                if (!response.ok) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Error loading order items: ${data.message || response.status}</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (!data.order_items || data.order_items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">No order items found</td></tr>`;
+                    return;
+                }
+                
+                data.order_items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.order_item_id}</td>
+                        <td>${item.order_id}</td>
+                        <td>${item.pname || item.product_id}</td>
+                        <td>${item.quantity}</td>
+                        <td>Rs. ${item.unit_price}</td>
+                        <td>Rs. ${item.subtotal}</td>
+                        <td>${item.category || 'N/A'}</td>
+                        <td>${item.shopkeeper_name || item.shop_name || 'N/A'}</td>
+                        <td>${item.created_at_formatted ? new Date(item.created_at_formatted).toLocaleString() : new Date(item.created_at).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading order items:', error);
+                document.getElementById('order-items-body').innerHTML = 
+                    `<tr><td colspan="9" class="text-center text-danger">Network error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function loadOrderHistory() {
+            try {
+                console.log('Loading order history...');
+                const response = await fetch(`${API_BASE}/api/admin/order-history`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Order history response status:', response.status);
+                const data = await response.json();
+                console.log('Order history data:', data);
+                
+                const tbody = document.getElementById('history-body');
+                
+                if (!response.ok) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error loading order history: ${data.message || response.status}</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (!data.history || data.history.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No order history found</td></tr>`;
+                    return;
+                }
+                
+                data.history.forEach(history => {
+                    const updatedByClass = history.updated_by === 'admin' ? 'badge-danger' : history.updated_by === 'shopkeeper' ? 'badge-warning' : 'badge-info';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${history.history_id}</td>
+                        <td>${history.order_id}</td>
+                        <td>${history.shopkeeper_name || history.shopkeeper_id || 'System'}</td>
+                        <td>${history.status}</td>
+                        <td>${history.note || 'No note'}</td>
+                        <td><span class="badge ${updatedByClass}">${history.updated_by}</span></td>
+                        <td>${history.created_at_formatted ? new Date(history.created_at_formatted).toLocaleString() : new Date(history.created_at).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading order history:', error);
+                document.getElementById('history-body').innerHTML = 
+                    `<tr><td colspan="7" class="text-center text-danger">Network error: ${error.message}</td></tr>`;
+            }
+        }
+        
+        // ======================= ACTION FUNCTIONS =======================
+        
+        async function approveShopkeeper(id) {
+            if (!confirm('Are you sure you want to approve this shopkeeper?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/shopkeepers/${id}/approve`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Shopkeeper approved successfully!');
+                    loadShopkeepers();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        }
+        
+        async function rejectShopkeeper(id) {
+            if (!confirm('Are you sure you want to reject this shopkeeper?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/shopkeepers/${id}/reject`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Shopkeeper rejected successfully!');
+                    loadShopkeepers();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        }
+        
+        async function deleteShopkeeper(id) {
+            if (!confirm('Are you sure you want to delete this shopkeeper? This will also delete all their products and orders.')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/shopkeepers/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Shopkeeper deleted successfully!');
+                    loadShopkeepers();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        }
+        
+        // ======================= INITIAL LOAD =======================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadShopkeepers();
+            
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function (event) {
+                    const target = event.target.getAttribute('data-bs-target');
+                    
+                    switch(target) {
+                        case '#shopkeepers':
+                            loadShopkeepers();
+                            break;
+                        case '#customers':
+                            loadCustomers();
+                            break;
+                        case '#products':
+                            loadProducts();
+                            break;
+                        case '#orders':
+                            loadOrders();
+                            break;
+                        case '#shopkeeper-orders':
+                            loadShopkeeperOrders();
+                            break;
+                        case '#cart':
+                            loadCartItems();
+                            break;
+                        case '#order-items':
+                            loadOrderItems();
+                            break;
+                        case '#history':
+                            loadOrderHistory();
+                            break;
+                    }
+                });
+            });
+        });
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

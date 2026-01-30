@@ -215,7 +215,7 @@ if (loginForm) {
   });
 }
 
-//  ======================= PROFILE DISPLAY =======================
+// ======================= PROFILE DISPLAY =======================
 function showProfile(user) {
   if (!user) return;
   const roleEl = document.getElementById("profileRole");
@@ -242,7 +242,8 @@ function showProfile(user) {
 
   const uploadLink = document.getElementById("uploadLink");
   const adminLink = document.getElementById("adminLink");
-  const shopkeeperDashboardLink = document.getElementById("shopkeeperDashboardLink"); // ADD THIS LINE
+  const shopkeeperDashboardLink = document.getElementById("shopkeeperDashboardLink");
+  const tableDashboardLink = document.getElementById("tableDashboardLink"); // ADD THIS
   
   if (uploadLink) {
     uploadLink.style.display = role === "Shopkeeper" ? "block" : "none";
@@ -252,12 +253,15 @@ function showProfile(user) {
     adminLink.style.display = role === "Admin" ? "block" : "none";
   }
   
-  // ADD THIS SECTION TO SHOW SHOPKEEPER DASHBOARD LINK
   if (shopkeeperDashboardLink) {
     shopkeeperDashboardLink.style.display = role === "Shopkeeper" ? "block" : "none";
   }
+  
+  // SHOW TABLE DASHBOARD FOR ADMIN
+  if (tableDashboardLink) {
+    tableDashboardLink.style.display = role === "Admin" ? "block" : "none";
+  }
 }
-
 // ======================= LOAD PRODUCTS =======================
 async function loadProducts() {
   try {

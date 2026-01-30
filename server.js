@@ -26,16 +26,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /* ================= STATIC FILES ================= */
-// Serve all files from public folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// Create uploads directory
 const uploadsDir = path.join(__dirname, "public/uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Serve uploads
 app.use("/uploads", express.static(uploadsDir));
 
 /* ================= MULTER CONFIG ================= */
@@ -78,7 +75,7 @@ function createTables() {
       mobile VARCHAR(15),
       password VARCHAR(255) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     
     `CREATE TABLE IF NOT EXISTS customers (
       id VARCHAR(10) PRIMARY KEY,
@@ -87,7 +84,7 @@ function createTables() {
       mobile VARCHAR(15),
       password VARCHAR(255) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     
     `CREATE TABLE IF NOT EXISTS shopkeepers (
       id VARCHAR(10) PRIMARY KEY,
@@ -102,7 +99,7 @@ function createTables() {
       status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
       verified BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     
     `CREATE TABLE IF NOT EXISTS products (
       p_id VARCHAR(10) PRIMARY KEY,
@@ -116,8 +113,8 @@ function createTables() {
       image VARCHAR(255),
       shopkeeper_id VARCHAR(10) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (shopkeeper_id) REFERENCES shopkeepers(id)
-    )`,
+      FOREIGN KEY (shopkeeper_id) REFERENCES shopkeepers(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     
     `CREATE TABLE IF NOT EXISTS cart (
       cart_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -126,9 +123,9 @@ function createTables() {
       quantity INT DEFAULT 1,
       added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY unique_cart_item (customer_id, product_id),
-      FOREIGN KEY (customer_id) REFERENCES customers(id),
-      FOREIGN KEY (product_id) REFERENCES products(p_id)
-    )`,
+      FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+      FOREIGN KEY (product_id) REFERENCES products(p_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     
     `CREATE TABLE IF NOT EXISTS orders (
       order_id VARCHAR(15) PRIMARY KEY,
@@ -138,8 +135,8 @@ function createTables() {
       payment_status ENUM('pending', 'paid', 'failed') DEFAULT 'pending',
       shipping_address TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (customer_id) REFERENCES customers(id)
-    )`,
+      FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     
     `CREATE TABLE IF NOT EXISTS order_items (
       order_item_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -148,9 +145,9 @@ function createTables() {
       quantity INT NOT NULL,
       unit_price DECIMAL(10,2) NOT NULL,
       subtotal DECIMAL(10,2) NOT NULL,
-      FOREIGN KEY (order_id) REFERENCES orders(order_id),
-      FOREIGN KEY (product_id) REFERENCES products(p_id)
-    )`,
+      FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+      FOREIGN KEY (product_id) REFERENCES products(p_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     
     `CREATE TABLE IF NOT EXISTS shopkeeper_orders (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -163,11 +160,11 @@ function createTables() {
       subtotal DECIMAL(10,2) NOT NULL,
       status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (order_id) REFERENCES orders(order_id),
-      FOREIGN KEY (product_id) REFERENCES products(p_id),
-      FOREIGN KEY (shopkeeper_id) REFERENCES shopkeepers(id),
-      FOREIGN KEY (customer_id) REFERENCES customers(id)
-    )`,
+      FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+      FOREIGN KEY (product_id) REFERENCES products(p_id) ON DELETE CASCADE,
+      FOREIGN KEY (shopkeeper_id) REFERENCES shopkeepers(id) ON DELETE CASCADE,
+      FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     
     `CREATE TABLE IF NOT EXISTS order_status_history (
       history_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -177,8 +174,9 @@ function createTables() {
       note TEXT,
       updated_by ENUM('admin', 'shopkeeper', 'system') NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (order_id) REFERENCES orders(order_id)
-    )`
+      FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+      FOREIGN KEY (shopkeeper_id) REFERENCES shopkeepers(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
   ];
 
   tables.forEach((sql, index) => {
@@ -191,7 +189,6 @@ function createTables() {
     });
   });
 
-  // Insert default admin
   const adminSql = `
     INSERT INTO admin (id, full_name, email, mobile, password) 
     VALUES ('A111', 'Admin User', 'admin@dreambasket.com', '9800000000', 'admin123')
@@ -363,7 +360,6 @@ app.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Email and password required" });
   }
 
-  // Check admin
   db.query("SELECT * FROM admin WHERE email=?", [email], async (err, adminRows) => {
     if (err) return res.status(500).json({ message: err.message });
     
@@ -392,7 +388,6 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // Check customer
     db.query("SELECT * FROM customers WHERE email=?", [email], async (err, customerRows) => {
       if (err) return res.status(500).json({ message: err.message });
       
@@ -423,7 +418,6 @@ app.post("/login", async (req, res) => {
         });
       }
 
-      // Check shopkeeper
       db.query("SELECT * FROM shopkeepers WHERE email=?", [email], async (err, shopkeeperRows) => {
         if (err) return res.status(500).json({ message: err.message });
         
@@ -499,7 +493,6 @@ app.post("/add-product", upload.single("image"), (req, res) => {
     return res.status(403).json({ message: "Only shopkeepers can add products" });
   }
 
-  // Get sizes
   let sizes = [];
   if (Array.isArray(req.body["sizes[]"])) {
     sizes = req.body["sizes[]"];
@@ -507,7 +500,6 @@ app.post("/add-product", upload.single("image"), (req, res) => {
     sizes = [req.body["sizes[]"]];
   }
   
-  // Calculate total quantity
   let totalQuantity = 1;
   
   if (req.body.direct_quantity) {
@@ -528,7 +520,6 @@ app.post("/add-product", upload.single("image"), (req, res) => {
     totalQuantity = 1;
   }
 
-  // Validate required fields
   if (!pname || !category || !price) {
     return res.status(400).json({ 
       message: "Missing required fields",
@@ -1045,7 +1036,6 @@ app.post("/api/order/checkout", authenticateCustomer, (req, res) => {
                         });
                       }
                       
-                      // Add order status history
                       const historySql = `
                         INSERT INTO order_status_history 
                         (order_id, status, note, updated_by)
@@ -1075,7 +1065,6 @@ app.post("/api/order/checkout", authenticateCustomer, (req, res) => {
   });
 });
 
-// Get customer order history
 app.get("/api/orders/history", authenticateCustomer, (req, res) => {
   const customerId = req.user.id;
   
@@ -1101,7 +1090,6 @@ app.get("/api/orders/history", authenticateCustomer, (req, res) => {
   });
 });
 
-// Get order details
 app.get("/api/order/:order_id", authenticateCustomer, (req, res) => {
   const { order_id } = req.params;
   const customerId = req.user.id;
@@ -1138,8 +1126,6 @@ app.get("/api/order/:order_id", authenticateCustomer, (req, res) => {
 });
 
 /* ================= SHOPKEEPER ORDER MANAGEMENT ================= */
-
-// Get shopkeeper's orders
 app.get("/api/shopkeeper/orders", authenticateShopkeeper, (req, res) => {
   const shopkeeperId = req.user.id;
   const page = parseInt(req.query.page) || 1;
@@ -1155,7 +1141,6 @@ app.get("/api/shopkeeper/orders", authenticateShopkeeper, (req, res) => {
     params.push(status);
   }
 
-  // Count
   const countSql = `
     SELECT COUNT(DISTINCT so.order_id) as total 
     FROM shopkeeper_orders so
@@ -1168,7 +1153,6 @@ app.get("/api/shopkeeper/orders", authenticateShopkeeper, (req, res) => {
     const total = countResult[0].total;
     const totalPages = Math.ceil(total / limit);
 
-    // Get orders
     const ordersSql = `
       SELECT 
         so.order_id,
@@ -1211,12 +1195,10 @@ app.get("/api/shopkeeper/orders", authenticateShopkeeper, (req, res) => {
   });
 });
 
-// Get shopkeeper's order details
 app.get("/api/shopkeeper/orders/:order_id", authenticateShopkeeper, (req, res) => {
   const shopkeeperId = req.user.id;
   const { order_id } = req.params;
 
-  // Get order header
   const orderSql = `
     SELECT 
       o.*,
@@ -1237,7 +1219,6 @@ app.get("/api/shopkeeper/orders/:order_id", authenticateShopkeeper, (req, res) =
 
     const order = orderResults[0];
 
-    // Get order items for this shopkeeper
     const itemsSql = `
       SELECT 
         so.*,
@@ -1275,7 +1256,6 @@ app.get("/api/shopkeeper/orders/:order_id", authenticateShopkeeper, (req, res) =
   });
 });
 
-// Update order status (shopkeeper)
 app.put("/api/shopkeeper/orders/:order_id/status", authenticateShopkeeper, (req, res) => {
   const shopkeeperId = req.user.id;
   const { order_id } = req.params;
@@ -1289,7 +1269,6 @@ app.put("/api/shopkeeper/orders/:order_id/status", authenticateShopkeeper, (req,
     });
   }
 
-  // Update shopkeeper order status
   const updateSql = `
     UPDATE shopkeeper_orders 
     SET status = ? 
@@ -1303,7 +1282,6 @@ app.put("/api/shopkeeper/orders/:order_id/status", authenticateShopkeeper, (req,
       return res.status(404).json({ message: 'No items found for this shopkeeper' });
     }
 
-    // Add to history
     const historySql = `
       INSERT INTO order_status_history 
       (order_id, shopkeeper_id, status, note, updated_by)
@@ -1321,29 +1299,19 @@ app.put("/api/shopkeeper/orders/:order_id/status", authenticateShopkeeper, (req,
   });
 });
 
-// Get shopkeeper's sales statistics
 app.get("/api/shopkeeper/stats", authenticateShopkeeper, (req, res) => {
   const shopkeeperId = req.user.id;
 
   const statsSql = `
     SELECT 
-      -- Total orders
       COUNT(DISTINCT order_id) as total_orders,
-      
-      -- Revenue
       COALESCE(SUM(subtotal), 0) as total_revenue,
-      
-      -- Items sold
       COALESCE(SUM(quantity), 0) as items_sold,
-      
-      -- Average order value
       CASE 
         WHEN COUNT(DISTINCT order_id) > 0 
         THEN COALESCE(SUM(subtotal), 0) / COUNT(DISTINCT order_id)
         ELSE 0 
       END as avg_order_value,
-      
-      -- Status breakdown
       SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_orders,
       SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) as processing_orders,
       SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) as shipped_orders,
@@ -1359,7 +1327,6 @@ app.get("/api/shopkeeper/stats", authenticateShopkeeper, (req, res) => {
   });
 });
 
-// Get shopkeeper's products
 app.get("/api/shopkeeper/products", authenticateShopkeeper, (req, res) => {
   const shopkeeperId = req.user.id;
   
@@ -1372,42 +1339,33 @@ app.get("/api/shopkeeper/products", authenticateShopkeeper, (req, res) => {
 });
 
 /* ================= ADMIN ENDPOINTS ================= */
-
-// Admin stats
 app.get("/api/admin/stats", authenticateAdmin, (req, res) => {
   const stats = {};
   
-  // Total shopkeepers
   db.query('SELECT COUNT(*) as count FROM shopkeepers', (err, result) => {
     if (err) stats.totalShopkeepers = 0;
     else stats.totalShopkeepers = result[0].count;
     
-    // Pending shopkeepers
     db.query('SELECT COUNT(*) as count FROM shopkeepers WHERE status = "pending"', (err, result) => {
       if (err) stats.pendingShopkeepers = 0;
       else stats.pendingShopkeepers = result[0].count;
       
-      // Approved shopkeepers
       db.query('SELECT COUNT(*) as count FROM shopkeepers WHERE status = "approved"', (err, result) => {
         if (err) stats.approvedShopkeepers = 0;
         else stats.approvedShopkeepers = result[0].count;
         
-        // Total customers
         db.query('SELECT COUNT(*) as count FROM customers', (err, result) => {
           if (err) stats.totalCustomers = 0;
           else stats.totalCustomers = result[0].count;
           
-          // Total products
           db.query('SELECT COUNT(*) as count FROM products', (err, result) => {
             if (err) stats.totalProducts = 0;
             else stats.totalProducts = result[0].count;
             
-            // Total orders
             db.query('SELECT COUNT(*) as count FROM orders', (err, result) => {
               if (err) stats.totalOrders = 0;
               else stats.totalOrders = result[0].count;
               
-              // Total revenue
               db.query('SELECT COALESCE(SUM(total_amount), 0) as revenue FROM orders WHERE status != "cancelled"', (err, result) => {
                 if (err) stats.totalRevenue = 0;
                 else stats.totalRevenue = result[0].revenue;
@@ -1422,8 +1380,7 @@ app.get("/api/admin/stats", authenticateAdmin, (req, res) => {
   });
 });
 
-// Get shopkeepers for admin
-app.get("/api/admin/shopkeepers", authenticateAdmin, (req, res) => {
+app.get("/api/admin/shopkeepers-list", authenticateAdmin, (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const search = req.query.search || '';
@@ -1444,7 +1401,6 @@ app.get("/api/admin/shopkeepers", authenticateAdmin, (req, res) => {
     params.push(status);
   }
 
-  // Count
   const countQuery = `SELECT COUNT(*) as total FROM shopkeepers s ${whereClause}`;
   
   db.query(countQuery, params, (err, countResult) => {
@@ -1453,7 +1409,6 @@ app.get("/api/admin/shopkeepers", authenticateAdmin, (req, res) => {
     const total = countResult[0].total;
     const totalPages = Math.ceil(total / limit);
 
-    // Data
     const dataQuery = `
       SELECT 
         s.*,
@@ -1489,7 +1444,6 @@ app.get("/api/admin/shopkeepers", authenticateAdmin, (req, res) => {
   });
 });
 
-// Approve shopkeeper
 app.put("/api/admin/shopkeepers/:id/approve", authenticateAdmin, (req, res) => {
   const { id } = req.params;
   const sql = `UPDATE shopkeepers SET status = 'approved', verified = 1 WHERE id = ?`;
@@ -1501,7 +1455,6 @@ app.put("/api/admin/shopkeepers/:id/approve", authenticateAdmin, (req, res) => {
   });
 });
 
-// Reject shopkeeper
 app.put("/api/admin/shopkeepers/:id/reject", authenticateAdmin, (req, res) => {
   const { id } = req.params;
   const sql = `UPDATE shopkeepers SET status = 'rejected', verified = 0 WHERE id = ?`;
@@ -1513,14 +1466,12 @@ app.put("/api/admin/shopkeepers/:id/reject", authenticateAdmin, (req, res) => {
   });
 });
 
-// Remove shopkeeper
 app.delete("/api/admin/shopkeepers/:id", authenticateAdmin, (req, res) => {
   const { id } = req.params;
   
   db.beginTransaction((err) => {
     if (err) return res.status(500).json({ message: err.message });
     
-    // First, delete shopkeeper's products
     const deleteProductsSql = `DELETE FROM products WHERE shopkeeper_id = ?`;
     db.query(deleteProductsSql, [id], (err) => {
       if (err) {
@@ -1529,7 +1480,6 @@ app.delete("/api/admin/shopkeepers/:id", authenticateAdmin, (req, res) => {
         });
       }
       
-      // Then delete shopkeeper orders
       const deleteShopkeeperOrdersSql = `DELETE FROM shopkeeper_orders WHERE shopkeeper_id = ?`;
       db.query(deleteShopkeeperOrdersSql, [id], (err) => {
         if (err) {
@@ -1538,7 +1488,6 @@ app.delete("/api/admin/shopkeepers/:id", authenticateAdmin, (req, res) => {
           });
         }
         
-        // Finally delete shopkeeper
         const deleteShopkeeperSql = `DELETE FROM shopkeepers WHERE id = ?`;
         db.query(deleteShopkeeperSql, [id], (err, result) => {
           if (err) {
@@ -1571,9 +1520,851 @@ app.delete("/api/admin/shopkeepers/:id", authenticateAdmin, (req, res) => {
   });
 });
 
-/* ================= ADDITIONAL UTILITY ENDPOINTS ================= */
+/* ================= ENHANCED ADMIN TABLE VIEW ENDPOINTS ================= */
+app.get("/api/admin/shopkeepers", authenticateAdmin, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || '';
+  const status = req.query.status || 'all';
+  const offset = (page - 1) * limit;
 
-// Get user info
+  let whereClause = '';
+  let params = [];
+
+  if (search) {
+    whereClause += ' WHERE (s.full_name LIKE ? OR s.email LIKE ? OR s.shop_name LIKE ? OR s.registration_no LIKE ? OR s.mobile LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  if (status !== 'all') {
+    if (whereClause) whereClause += ' AND s.status = ?';
+    else whereClause = ' WHERE s.status = ?';
+    params.push(status);
+  }
+
+  const countQuery = `SELECT COUNT(*) as total FROM shopkeepers s ${whereClause}`;
+  
+  db.query(countQuery, params, (err, countResult) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    const dataQuery = `
+      SELECT 
+        s.*,
+        (SELECT COUNT(*) FROM products p WHERE p.shopkeeper_id = s.id) as products_count,
+        (SELECT COALESCE(SUM(so.subtotal), 0) FROM shopkeeper_orders so WHERE so.shopkeeper_id = s.id AND so.status = 'delivered') as total_sales,
+        (SELECT COALESCE(SUM(so.quantity), 0) FROM shopkeeper_orders so WHERE so.shopkeeper_id = s.id AND so.status = 'delivered') as items_sold,
+        DATE_FORMAT(s.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted
+      FROM shopkeepers s
+      ${whereClause}
+      ORDER BY s.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, limit, offset];
+
+    db.query(dataQuery, dataParams, (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      res.json({
+        shopkeepers: results,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+});
+
+app.get("/api/admin/customers", authenticateAdmin, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || '';
+  const offset = (page - 1) * limit;
+
+  let whereClause = '';
+  let params = [];
+
+  if (search) {
+    whereClause += ' WHERE (c.full_name LIKE ? OR c.email LIKE ? OR c.mobile LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  const countQuery = `SELECT COUNT(*) as total FROM customers c ${whereClause}`;
+  
+  db.query(countQuery, params, (err, countResult) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    const dataQuery = `
+      SELECT 
+        c.*,
+        (SELECT COUNT(*) FROM orders o WHERE o.customer_id = c.id) as total_orders,
+        (SELECT COALESCE(SUM(o.total_amount), 0) FROM orders o WHERE o.customer_id = c.id) as total_spent,
+        (SELECT MAX(o.created_at) FROM orders o WHERE o.customer_id = c.id) as last_order_date,
+        DATE_FORMAT(c.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted
+      FROM customers c
+      ${whereClause}
+      ORDER BY c.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, limit, offset];
+
+    db.query(dataQuery, dataParams, (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      res.json({
+        customers: results,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+});
+
+app.get("/api/admin/products", authenticateAdmin, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || '';
+  const category = req.query.category || '';
+  const status = req.query.status || 'all';
+  const offset = (page - 1) * limit;
+
+  let whereClause = 'WHERE 1=1';
+  let params = [];
+
+  if (search) {
+    whereClause += ' AND (p.pname LIKE ? OR p.description LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (category) {
+    whereClause += ' AND p.category = ?';
+    params.push(category);
+  }
+
+  if (status === 'low_stock') {
+    whereClause += ' AND p.quantity > 0 AND p.quantity <= 10';
+  } else if (status === 'out_of_stock') {
+    whereClause += ' AND p.quantity = 0';
+  } else if (status === 'in_stock') {
+    whereClause += ' AND p.quantity > 10';
+  }
+
+  const countQuery = `SELECT COUNT(*) as total FROM products p ${whereClause}`;
+  
+  db.query(countQuery, params, (err, countResult) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    const dataQuery = `
+      SELECT 
+        p.*,
+        s.shop_name,
+        s.full_name as shopkeeper_name,
+        s.email as shopkeeper_email,
+        (SELECT COUNT(DISTINCT oi.order_id) FROM order_items oi WHERE oi.product_id = p.p_id) as times_ordered,
+        (SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.product_id = p.p_id) as total_sold,
+        (SELECT COALESCE(SUM(oi.subtotal), 0) FROM order_items oi WHERE oi.product_id = p.p_id) as total_revenue,
+        CASE 
+          WHEN p.quantity = 0 THEN 'Out of Stock'
+          WHEN p.quantity <= 10 THEN 'Low Stock'
+          ELSE 'In Stock'
+        END as stock_status,
+        DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted
+      FROM products p
+      LEFT JOIN shopkeepers s ON p.shopkeeper_id = s.id
+      ${whereClause}
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, limit, offset];
+
+    db.query(dataQuery, dataParams, (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      res.json({
+        products: results,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+});
+
+app.get("/api/admin/orders", authenticateAdmin, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || '';
+  const status = req.query.status || 'all';
+  const payment_status = req.query.payment_status || 'all';
+  const start_date = req.query.start_date || '';
+  const end_date = req.query.end_date || '';
+  const offset = (page - 1) * limit;
+
+  let whereClause = 'WHERE 1=1';
+  let params = [];
+
+  if (search) {
+    whereClause += ' AND (o.order_id LIKE ? OR c.full_name LIKE ? OR c.email LIKE ? OR c.mobile LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  if (status !== 'all') {
+    whereClause += ' AND o.status = ?';
+    params.push(status);
+  }
+
+  if (payment_status !== 'all') {
+    whereClause += ' AND o.payment_status = ?';
+    params.push(payment_status);
+  }
+
+  if (start_date) {
+    whereClause += ' AND DATE(o.created_at) >= ?';
+    params.push(start_date);
+  }
+
+  if (end_date) {
+    whereClause += ' AND DATE(o.created_at) <= ?';
+    params.push(end_date);
+  }
+
+  const countQuery = `SELECT COUNT(*) as total FROM orders o LEFT JOIN customers c ON o.customer_id = c.id ${whereClause}`;
+  
+  db.query(countQuery, params, (err, countResult) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    const dataQuery = `
+      SELECT 
+        o.*,
+        c.full_name as customer_name,
+        c.email as customer_email,
+        c.mobile as customer_mobile,
+        (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.order_id) as items_count,
+        (SELECT COUNT(DISTINCT so.shopkeeper_id) FROM shopkeeper_orders so WHERE so.order_id = o.order_id) as shopkeepers_count,
+        DATE_FORMAT(o.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted,
+        DATE_FORMAT(o.created_at, '%Y-%m-%d') as order_date
+      FROM orders o
+      LEFT JOIN customers c ON o.customer_id = c.id
+      ${whereClause}
+      ORDER BY o.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, limit, offset];
+
+    db.query(dataQuery, dataParams, (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      res.json({
+        orders: results,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+});
+
+app.get("/api/admin/shopkeeper-orders", authenticateAdmin, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || '';
+  const shopkeeper_id = req.query.shopkeeper_id || '';
+  const status = req.query.status || 'all';
+  const offset = (page - 1) * limit;
+
+  let whereClause = 'WHERE 1=1';
+  let params = [];
+
+  if (search) {
+    whereClause += ' AND (so.order_id LIKE ? OR p.pname LIKE ? OR s.shop_name LIKE ? OR c.full_name LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  if (shopkeeper_id) {
+    whereClause += ' AND so.shopkeeper_id = ?';
+    params.push(shopkeeper_id);
+  }
+
+  if (status !== 'all') {
+    whereClause += ' AND so.status = ?';
+    params.push(status);
+  }
+
+  const countQuery = `
+    SELECT COUNT(*) as total 
+    FROM shopkeeper_orders so
+    LEFT JOIN products p ON so.product_id = p.p_id
+    LEFT JOIN shopkeepers s ON so.shopkeeper_id = s.id
+    LEFT JOIN customers c ON so.customer_id = c.id
+    ${whereClause}
+  `;
+  
+  db.query(countQuery, params, (err, countResult) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    const dataQuery = `
+      SELECT 
+        so.*,
+        p.pname as product_name,
+        p.category as product_category,
+        p.image as product_image,
+        s.shop_name as shopkeeper_name,
+        s.email as shopkeeper_email,
+        c.full_name as customer_name,
+        c.email as customer_email,
+        o.status as order_overall_status,
+        o.payment_status as order_payment_status,
+        DATE_FORMAT(so.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted
+      FROM shopkeeper_orders so
+      LEFT JOIN products p ON so.product_id = p.p_id
+      LEFT JOIN shopkeepers s ON so.shopkeeper_id = s.id
+      LEFT JOIN customers c ON so.customer_id = c.id
+      LEFT JOIN orders o ON so.order_id = o.order_id
+      ${whereClause}
+      ORDER BY so.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, limit, offset];
+
+    db.query(dataQuery, dataParams, (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      res.json({
+        orders: results,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+});
+
+app.get("/api/admin/cart", authenticateAdmin, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
+
+  const countQuery = `SELECT COUNT(*) as total FROM cart c`;
+  
+  db.query(countQuery, (err, countResult) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    const dataQuery = `
+      SELECT 
+        c.*,
+        cu.full_name as customer_name,
+        cu.email as customer_email,
+        p.pname as product_name,
+        p.price as product_price,
+        p.discount as product_discount,
+        p.image as product_image,
+        p.category as product_category,
+        DATE_FORMAT(c.added_at, '%Y-%m-%d %H:%i:%s') as added_at_formatted
+      FROM cart c
+      LEFT JOIN customers cu ON c.customer_id = cu.id
+      LEFT JOIN products p ON c.product_id = p.p_id
+      ORDER BY c.added_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    db.query(dataQuery, [limit, offset], (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      res.json({
+        items: results,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+});
+
+app.get("/api/admin/order-items", authenticateAdmin, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const order_id = req.query.order_id || '';
+  const offset = (page - 1) * limit;
+
+  let whereClause = 'WHERE 1=1';
+  let params = [];
+
+  if (order_id) {
+    whereClause += ' AND oi.order_id = ?';
+    params.push(order_id);
+  }
+
+  const countQuery = `SELECT COUNT(*) as total FROM order_items oi ${whereClause}`;
+  
+  db.query(countQuery, params, (err, countResult) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    const dataQuery = `
+      SELECT 
+        oi.*,
+        p.pname,
+        p.description,
+        p.category,
+        p.image,
+        s.shop_name,
+        s.full_name as shopkeeper_name,
+        DATE_FORMAT(oi.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted
+      FROM order_items oi
+      LEFT JOIN products p ON oi.product_id = p.p_id
+      LEFT JOIN shopkeepers s ON p.shopkeeper_id = s.id
+      ${whereClause}
+      ORDER BY oi.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, limit, offset];
+
+    db.query(dataQuery, dataParams, (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      res.json({
+        order_items: results,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+});
+
+app.get("/api/admin/order-history", authenticateAdmin, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const order_id = req.query.order_id || '';
+  const offset = (page - 1) * limit;
+
+  let whereClause = 'WHERE 1=1';
+  let params = [];
+
+  if (order_id) {
+    whereClause += ' AND osh.order_id = ?';
+    params.push(order_id);
+  }
+
+  const countQuery = `SELECT COUNT(*) as total FROM order_status_history osh ${whereClause}`;
+  
+  db.query(countQuery, params, (err, countResult) => {
+    if (err) return res.status(500).json({ message: err.message });
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    const dataQuery = `
+      SELECT 
+        osh.*,
+        s.shop_name as shopkeeper_name,
+        DATE_FORMAT(osh.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted
+      FROM order_status_history osh
+      LEFT JOIN shopkeepers s ON osh.shopkeeper_id = s.id
+      ${whereClause}
+      ORDER BY osh.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, limit, offset];
+
+    db.query(dataQuery, dataParams, (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      res.json({
+        history: results,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+});
+
+/* ================= ADMIN CRUD OPERATIONS ================= */
+app.delete("/api/admin/products/:id", authenticateAdmin, (req, res) => {
+  const productId = req.params.id;
+  
+  const checkOrdersSql = `SELECT COUNT(*) as order_count FROM order_items WHERE product_id = ?`;
+  
+  db.query(checkOrdersSql, [productId], (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    
+    if (result[0].order_count > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete product. It has been ordered. Consider disabling it instead.' 
+      });
+    }
+    
+    const deleteCartSql = `DELETE FROM cart WHERE product_id = ?`;
+    db.query(deleteCartSql, [productId], (err) => {
+      if (err) return res.status(500).json({ message: err.message });
+      
+      const deleteProductSql = `DELETE FROM products WHERE p_id = ?`;
+      
+      db.query(deleteProductSql, [productId], (err, result) => {
+        if (err) return res.status(500).json({ message: err.message });
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Product not found' });
+        
+        res.json({ 
+          message: 'Product deleted successfully',
+          deleted: true
+        });
+      });
+    });
+  });
+});
+
+app.put("/api/admin/products/:id", authenticateAdmin, upload.single("image"), (req, res) => {
+  const productId = req.params.id;
+  const { 
+    pname, 
+    description, 
+    category, 
+    price, 
+    discount, 
+    quantity,
+    size
+  } = req.body;
+  
+  let updateFields = [];
+  let params = [];
+  
+  if (pname) { updateFields.push("pname = ?"); params.push(pname); }
+  if (description !== undefined) { updateFields.push("description = ?"); params.push(description); }
+  if (category) { updateFields.push("category = ?"); params.push(category); }
+  if (price) { updateFields.push("price = ?"); params.push(parseFloat(price)); }
+  if (discount !== undefined) { updateFields.push("discount = ?"); params.push(parseFloat(discount)); }
+  if (quantity !== undefined) { updateFields.push("quantity = ?"); params.push(parseInt(quantity)); }
+  if (size !== undefined) { updateFields.push("size = ?"); params.push(size); }
+  
+  if (req.file) {
+    const imageName = productId + path.extname(req.file.originalname);
+    updateFields.push("image = ?");
+    params.push(imageName);
+    
+    const oldPath = path.join(uploadsDir, req.file.filename);
+    const newPath = path.join(uploadsDir, imageName);
+    try {
+      fs.renameSync(oldPath, newPath);
+    } catch (err) {
+      console.error('Error saving image:', err);
+    }
+  }
+  
+  if (updateFields.length === 0) {
+    return res.status(400).json({ message: 'No fields to update' });
+  }
+  
+  params.push(productId);
+  
+  const updateSql = `UPDATE products SET ${updateFields.join(', ')} WHERE p_id = ?`;
+  
+  db.query(updateSql, params, (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Product not found' });
+    
+    res.json({ 
+      message: 'Product updated successfully',
+      updated: true
+    });
+  });
+});
+
+app.put("/api/admin/orders/:order_id/status", authenticateAdmin, (req, res) => {
+  const { order_id } = req.params;
+  const { status, note } = req.body;
+
+  const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+  
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ 
+      message: 'Invalid status. Allowed: ' + validStatuses.join(', ') 
+    });
+  }
+
+  const updateSql = `UPDATE orders SET status = ? WHERE order_id = ?`;
+  
+  db.query(updateSql, [status, order_id], (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Order not found' });
+    
+    const updateShopkeeperOrdersSql = `UPDATE shopkeeper_orders SET status = ? WHERE order_id = ?`;
+    db.query(updateShopkeeperOrdersSql, [status, order_id]);
+    
+    const historySql = `
+      INSERT INTO order_status_history 
+      (order_id, status, note, updated_by)
+      VALUES (?, ?, ?, 'admin')
+    `;
+    
+    db.query(historySql, [order_id, status, note || `Status updated to ${status} by admin`], (err) => {
+      if (err) console.error('Error saving history:', err);
+      
+      res.json({ 
+        message: `Order status updated to ${status}`,
+        updated: true
+      });
+    });
+  });
+});
+
+app.put("/api/admin/orders/:order_id/payment", authenticateAdmin, (req, res) => {
+  const { order_id } = req.params;
+  const { payment_status } = req.body;
+
+  const validStatuses = ['pending', 'paid', 'failed'];
+  
+  if (!validStatuses.includes(payment_status)) {
+    return res.status(400).json({ 
+      message: 'Invalid payment status. Allowed: ' + validStatuses.join(', ') 
+    });
+  }
+
+  const updateSql = `UPDATE orders SET payment_status = ? WHERE order_id = ?`;
+  
+  db.query(updateSql, [payment_status, order_id], (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Order not found' });
+    
+    res.json({ 
+      message: `Payment status updated to ${payment_status}`,
+      updated: true
+    });
+  });
+});
+
+app.delete("/api/admin/customers/:id", authenticateAdmin, (req, res) => {
+  const customerId = req.params.id;
+  
+  const checkOrdersSql = `SELECT COUNT(*) as order_count FROM orders WHERE customer_id = ?`;
+  
+  db.query(checkOrdersSql, [customerId], (err, result) => {
+    if (err) return res.status(500).json({ message: err.message });
+    
+    if (result[0].order_count > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete customer with order history. Consider disabling instead.' 
+      });
+    }
+    
+    db.beginTransaction((err) => {
+      if (err) return res.status(500).json({ message: err.message });
+      
+      const deleteCartSql = `DELETE FROM cart WHERE customer_id = ?`;
+      db.query(deleteCartSql, [customerId], (err) => {
+        if (err) {
+          return db.rollback(() => {
+            res.status(500).json({ message: err.message });
+          });
+        }
+        
+        const deleteCustomerSql = `DELETE FROM customers WHERE id = ?`;
+        db.query(deleteCustomerSql, [customerId], (err, result) => {
+          if (err) {
+            return db.rollback(() => {
+              res.status(500).json({ message: err.message });
+            });
+          }
+          
+          if (result.affectedRows === 0) {
+            return db.rollback(() => {
+              res.status(404).json({ message: 'Customer not found' });
+            });
+          }
+          
+          db.commit((err) => {
+            if (err) {
+              return db.rollback(() => {
+                res.status(500).json({ message: err.message });
+              });
+            }
+            
+            res.json({ 
+              message: 'Customer deleted successfully',
+              deleted: true
+            });
+          });
+        });
+      });
+    });
+  });
+});
+
+app.get("/api/admin/advanced-stats", authenticateAdmin, (req, res) => {
+  const { start_date, end_date } = req.query;
+  
+  let dateWhereClause = '';
+  let params = [];
+  
+  if (start_date && end_date) {
+    dateWhereClause = 'WHERE DATE(created_at) BETWEEN ? AND ?';
+    params.push(start_date, end_date);
+  } else if (start_date) {
+    dateWhereClause = 'WHERE DATE(created_at) >= ?';
+    params.push(start_date);
+  } else if (end_date) {
+    dateWhereClause = 'WHERE DATE(created_at) <= ?';
+    params.push(end_date);
+  }
+  
+  const statsQueries = {
+    daily_stats: `
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as orders_count,
+        COALESCE(SUM(total_amount), 0) as daily_revenue,
+        AVG(total_amount) as avg_order_value
+      FROM orders
+      ${dateWhereClause}
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+      LIMIT 30
+    `,
+    
+    top_products: `
+      SELECT 
+        p.pname,
+        p.category,
+        p.image,
+        s.shop_name,
+        SUM(oi.quantity) as total_sold,
+        COALESCE(SUM(oi.subtotal), 0) as total_revenue
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.p_id
+      JOIN shopkeepers s ON p.shopkeeper_id = s.id
+      JOIN orders o ON oi.order_id = o.order_id
+      ${dateWhereClause ? dateWhereClause.replace('created_at', 'o.created_at') : ''}
+      GROUP BY p.p_id
+      ORDER BY total_sold DESC
+      LIMIT 10
+    `,
+    
+    top_customers: `
+      SELECT 
+        c.id,
+        c.full_name,
+        c.email,
+        c.mobile,
+        COUNT(o.order_id) as orders_count,
+        COALESCE(SUM(o.total_amount), 0) as total_spent
+      FROM customers c
+      LEFT JOIN orders o ON c.id = o.customer_id
+      ${dateWhereClause ? dateWhereClause.replace('created_at', 'o.created_at') : ''}
+      GROUP BY c.id
+      HAVING orders_count > 0
+      ORDER BY total_spent DESC
+      LIMIT 10
+    `,
+    
+    top_shopkeepers: `
+      SELECT 
+        s.id,
+        s.shop_name,
+        s.full_name,
+        s.email,
+        COUNT(DISTINCT so.order_id) as orders_count,
+        COALESCE(SUM(so.subtotal), 0) as total_sales,
+        COUNT(DISTINCT p.p_id) as products_count
+      FROM shopkeepers s
+      LEFT JOIN shopkeeper_orders so ON s.id = so.shopkeeper_id
+      LEFT JOIN products p ON s.id = p.shopkeeper_id
+      LEFT JOIN orders o ON so.order_id = o.order_id
+      ${dateWhereClause ? dateWhereClause.replace('created_at', 'o.created_at') : ''}
+      GROUP BY s.id
+      HAVING total_sales > 0
+      ORDER BY total_sales DESC
+      LIMIT 10
+    `,
+    
+    category_sales: `
+      SELECT 
+        p.category,
+        COUNT(DISTINCT oi.order_id) as orders_count,
+        SUM(oi.quantity) as items_sold,
+        COALESCE(SUM(oi.subtotal), 0) as total_revenue
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.p_id
+      JOIN orders o ON oi.order_id = o.order_id
+      ${dateWhereClause ? dateWhereClause.replace('created_at', 'o.created_at') : ''}
+      GROUP BY p.category
+      ORDER BY total_revenue DESC
+    `
+  };
+  
+  const results = {};
+  let queryCount = 0;
+  const totalQueries = Object.keys(statsQueries).length;
+  
+  Object.keys(statsQueries).forEach(key => {
+    db.query(statsQueries[key], params, (err, queryResults) => {
+      if (err) {
+        console.error(`Error in ${key} query:`, err);
+        results[key] = [];
+      } else {
+        results[key] = queryResults;
+      }
+      
+      queryCount++;
+      
+      if (queryCount === totalQueries) {
+        res.json(results);
+      }
+    });
+  });
+});
+
+/* ================= ADDITIONAL UTILITY ENDPOINTS ================= */
 app.get("/api/user/:id", authenticateUser, (req, res) => {
   const { id } = req.params;
   const prefix = id.charAt(0).toUpperCase();
@@ -1598,7 +2389,6 @@ app.get("/api/user/:id", authenticateUser, (req, res) => {
   });
 });
 
-// Sync cart
 app.post("/api/cart/sync", authenticateCustomer, (req, res) => {
   const customerId = req.user.id;
   const { items } = req.body;
@@ -1703,36 +2493,32 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public/admin.html"));
 });
 
+app.get("/admin-dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/admin-dashboard.html"));
+});
 
 app.get("/shopkeeper-dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "public/shopkeeper-dashboard.html"));
 });
+
 /* ================= 404 HANDLER ================= */
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, "public/index.html"));
 });
 
 /* ================= START SERVER ================= */
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+}).on('error', (err) => {
+  console.error('Server failed to start:', err);
+  process.exit(1);
 });
-// Handle uncaught errors
+
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
 });
 
 process.on('unhandledRejection', (error) => {
   console.error('Unhandled Rejection:', error);
-});
-
-// Use Render's PORT or default to 3000
-const aPORT = process.env.PORT || 3000;
-
-// Start server with error handling
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running on port ${aPORT}`);
-  console.log(`✅ Environment: ${process.env.NODE_ENV}`);
-}).on('error', (err) => {
-  console.error('Server failed to start:', err);
-  process.exit(1);
 });
