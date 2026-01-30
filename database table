@@ -1,0 +1,70 @@
+-- Essential tables for basic functionality
+CREATE TABLE admin (
+    id VARCHAR(10) PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    mobile VARCHAR(15),
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE customers (
+    id VARCHAR(10) PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    mobile VARCHAR(15),
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE shopkeepers (
+    id VARCHAR(10) PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    mobile VARCHAR(15) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    shop_name VARCHAR(200) NOT NULL,
+    shop_address TEXT NOT NULL,
+    registration_no VARCHAR(50) UNIQUE NOT NULL,
+    citizenship_image VARCHAR(255),
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE products (
+    p_id VARCHAR(10) PRIMARY KEY,
+    pname VARCHAR(200) NOT NULL,
+    description TEXT,
+    category VARCHAR(100) NOT NULL,
+    size VARCHAR(255),
+    quantity INT DEFAULT 0,
+    price DECIMAL(10,2) NOT NULL,
+    discount DECIMAL(5,2) DEFAULT 0.00,
+    image VARCHAR(255),
+    shopkeeper_id VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (shopkeeper_id) REFERENCES shopkeepers(id) ON DELETE CASCADE
+);
+
+-- Insert default data
+INSERT INTO admin (id, full_name, email, mobile, password) 
+VALUES ('A111', 'Admin User', 'admin@dreambasket.com', '9800000000', 'admin123');
+
+
+
+
+-- database relational
+ADMIN
+  |
+  |-- (Manages)
+  |
+SHOPKEEPERS --- (1:M) --- PRODUCTS
+  |                           |
+  |                           |-- (1:M) --- CART --- (M:1) --- CUSTOMERS
+  |                           |
+  |                           |-- (1:M) --- ORDER_ITEMS --- (M:1) --- ORDERS --- (M:1) --- CUSTOMERS
+  |
+CUSTOMERS --- (1:M) --- WISHLIST
+          --- (1:M) --- REVIEWS
+          --- (1:M) --- NOTIFICATIONS

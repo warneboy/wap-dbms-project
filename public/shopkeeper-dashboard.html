@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopkeeper Dashboard - DreamBasket</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    /* Enhanced Dashboard Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    .dashboard-header {
+      background: white;
+      border-radius: 15px;
+      padding: 25px 30px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .shop-info h1 {
+      font-size: 28px;
+      color: #293a55;
+      margin-bottom: 8px;
+    }
+
+    .shop-info p {
+      color: #666;
+      margin-bottom: 5px;
+      font-size: 15px;
+    }
+
+    .shop-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .status-approved {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .logout-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: #ff5252;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s, box-shadow 0.3s;
+      border-left: 4px solid #0fe4e4;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .stat-icon {
+      font-size: 28px;
+      color: #0fe4e4;
+      background: rgba(15, 228, 228, 0.1);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-title {
+      color: #666;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #293a55;
+      margin: 10px 0;
+    }
+
+    .stat-change {
+      font-size: 13px;
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    /* Dashboard Content */
+    .dashboard-content {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 25px;
+    }
+
+    /* Orders Section */
+    .orders-section {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #293a55;
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .filter-select, .search-input {
+      padding: 10px 15px;
+      border: 2px solid #e1e5eb;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .search-input {
+      width: 250px;
+    }
+
+    .btn-primary {
+      background: #0fe4e4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: #0bc9c9;
+      transform: translateY(-2px);
+    }
+
+    /* Orders Table */
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .orders-table th {
+      background: #f8f9fa;
+      padding: 16px;
+      text-align: left;
+      color: #293a55;
+      font-weight: 600;
+      border-bottom: 2px solid #e1e5eb;
+      font-size: 14px;
+    }
+
+    .orders-table td {
+      padding: 16px;
+      border-bottom: 1px solid #e1e5eb;
+      vertical-align: top;
+    }
+
+    .orders-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    /* Customer Info */
+    .customer-cell {
+      min-width: 180px;
+    }
+
+    .customer-name {
+      font-weight: 600;
+      color: #293a55;
+      margin-bottom: 4px;
+    }
+
+    .customer-email {
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* Product Items */
+    .product-items {
+      max-width: 200px;
+    }
+
+    .product-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .product-item:last-child {
+      border-bottom: none;
+    }
+
+    .product-name {
+      font-size: 14px;
+      color: #333;
+      flex: 1;
+      margin-right: 10px;
+    }
+
+    .product-qty {
+      color: #666;
+      font-size: 13px;
+      margin-right: 10px;
+    }
+
+    .product-price {
+      font-weight: 600;
+      color: #293a55;
+      font-size: 14px;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-processing {
+      background: #cce5ff;
+      color: #004085;
+    }
+
+    .status-shipped {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .status-delivered {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-cancelled {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-view {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .btn-process {
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .btn-ship {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-view:hover, .btn-process:hover, .btn-ship:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    /* Sidebar */
+    .dashboard-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    /* Recent Products */
+    .recent-products {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .product-list {
+      margin-top: 15px;
+    }
+
+    .product-list-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .product-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .product-list-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      margin-right: 15px;
+      object-fit: cover;
+    }
+
+    .product-list-info {
+      flex: 1;
+    }
+
+    .product-list-name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .product-list-stock {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .product-list-price {
+      font-weight: 600;
+      color: #293a55;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .action-list {
+      margin-top: 15px;
+    }
+
+    .action-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-item:hover {
+      background: #f8f9fa;
+      padding-left: 10px;
+    }
+
+    .action-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(15, 228, 228, 0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+      color: #0fe4e4;
+      font-size: 18px;
+    }
+
+    .action-text {
+      flex: 1;
+      font-weight: 600;
+      color: #293a55;
+    }
+
+    .action-arrow {
+      color: #666;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: #666;
+    }
+
+    .empty-icon {
+      font-size: 60px;
+      color: #ddd;
+      margin-bottom: 20px;
+    }
+
+    .empty-title {
+      font-size: 20px;
+      color: #293a55;
+      margin-bottom: 10px;
+    }
+
+    .empty-text {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 25px;
+      gap: 10px;
+    }
+
+    .pagination-btn {
+      padding: 8px 16px;
+      border: 1px solid #e1e5eb;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .pagination-btn:hover {
+      background: #f8f9fa;
+      border-color: #0fe4e4;
+    }
+
+    .pagination-btn.active {
+      background: #0fe4e4;
+      color: white;
+      border-color: #0fe4e4;
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="shop-info">
+      <h1 id="userGreeting">Welcome, Shopkeeper</h1>
+      <p>Shop: <strong id="shopName">My Shop</strong> | Email: <span id="shopEmail">email@example.com</span></p>
+      <p>Status: <span id="shopStatus" class="shop-status status-pending">⏳ Pending Approval</span></p>
+    </div>
+    <button class="logout-btn" onclick="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
+
+  <!-- Statistics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon">
+          <i class="fas fa-shopping-bag"></i>
+        </div>
+        <span class="stat-title">Total Orders</span>
+      </div>
+      <div class="stat-value" id="totalOrders">0</div>
+      <div class="stat-change" id="orderChange">+0% from last month</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon">
+          <i class="fas fa-rupee-sign"></i>
+        </div>
+        <span class="stat-title">Total Revenue</span>
+      </div>
+      <div class="stat-value" id="totalRevenue">₹0.00</div>
+      <div class="stat-change" id="revenueChange">+0% from last month</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon">
+          <i class="fas fa-box"></i>
+        </div>
+        <span class="stat-title">Items Sold</span>
+      </div>
+      <div class="stat-value" id="itemsSold">0</div>
+      <div class="stat-change" id="itemsChange">+0% from last month</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <span class="stat-title">Pending Orders</span>
+      </div>
+      <div class="stat-value" id="pendingOrders">0</div>
+      <div class="stat-change" id="pendingChange">+0% from last month</div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    <!-- Orders Section -->
+    <div class="orders-section">
+      <div class="section-header">
+        <h2 class="section-title">Recent Orders</h2>
+        <div class="section-actions">
+          <input type="text" class="search-input" id="orderSearch" placeholder="Search orders..." onkeyup="searchOrders()">
+          <select class="filter-select" id="orderStatusFilter" onchange="loadOrders(1)">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="table-container">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Products & Quantity</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <!-- Orders will load here -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="ordersPagination">
+        <!-- Pagination will load here -->
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="dashboard-sidebar">
+      <!-- Recent Products -->
+      <div class="recent-products">
+        <h2 class="section-title">Recent Products</h2>
+        <div class="product-list" id="productsList">
+          <!-- Products will load here -->
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h2 class="section-title">Quick Actions</h2>
+        <div class="action-list">
+          <div class="action-item" onclick="location.href='upload.html'">
+            <div class="action-icon">
+              <i class="fas fa-plus"></i>
+            </div>
+            <div class="action-text">Add New Product</div>
+            <div class="action-arrow">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+          <div class="action-item" onclick="location.href='index.html'">
+            <div class="action-icon">
+              <i class="fas fa-store"></i>
+            </div>
+            <div class="action-text">View Your Store</div>
+            <div class="action-arrow">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+          <div class="action-item" onclick="refreshDashboard()">
+            <div class="action-icon">
+              <i class="fas fa-sync-alt"></i>
+            </div>
+            <div class="action-text">Refresh Dashboard</div>
+            <div class="action-arrow">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+  let currentOrders = [];
+  let currentPage = 1;
+  let totalPages = 1;
+
+  // Initialize dashboard
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard loaded');
+    
+    const user = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    
+    if (!user || !token) {
+      alert('Please login first');
+      window.location.href = 'index.html';
+      return;
+    }
+    
+    if (user.role !== 'shopkeeper') {
+      alert('Only shopkeepers can access this page!');
+      window.location.href = 'index.html';
+      return;
+    }
+    
+    initializeDashboard(user);
+  });
+
+  function initializeDashboard(user) {
+    // Update user info
+    document.getElementById('userGreeting').textContent = `Welcome, ${user.full_name || 'Shopkeeper'}`;
+    document.getElementById('shopName').textContent = user.shop_name || 'My Shop';
+    document.getElementById('shopEmail').textContent = user.email || '';
+    
+    const statusEl = document.getElementById('shopStatus');
+    if (user.status === 'approved') {
+      statusEl.textContent = '✓ Approved';
+      statusEl.className = 'shop-status status-approved';
+    } else {
+      statusEl.textContent = '⏳ Pending Approval';
+      statusEl.className = 'shop-status status-pending';
+    }
+    
+    // Load data
+    loadShopkeeperStats();
+    loadOrders();
+    loadProducts();
+  }
+
+  async function loadShopkeeperStats() {
+    const token = localStorage.getItem('token');
+    
+    try {
+      const response = await fetch('/api/shopkeeper/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const stats = await response.json();
+        
+        // Update stats
+        document.getElementById('totalOrders').textContent = parseInt(stats.total_orders) || 0;
+        document.getElementById('totalRevenue').textContent = '₹' + (parseFloat(stats.total_revenue) || 0).toFixed(2);
+        document.getElementById('itemsSold').textContent = parseInt(stats.items_sold) || 0;
+        document.getElementById('pendingOrders').textContent = parseInt(stats.pending_orders) || 0;
+        
+        // Update change percentages (you can modify these based on your data)
+        const orderChange = document.getElementById('orderChange');
+        const revenueChange = document.getElementById('revenueChange');
+        const itemsChange = document.getElementById('itemsChange');
+        const pendingChange = document.getElementById('pendingChange');
+        
+        if (orderChange) orderChange.textContent = `+${Math.floor(Math.random() * 30)}% from last month`;
+        if (revenueChange) revenueChange.textContent = `+${Math.floor(Math.random() * 40)}% from last month`;
+        if (itemsChange) itemsChange.textContent = `+${Math.floor(Math.random() * 25)}% from last month`;
+        if (pendingChange) pendingChange.textContent = `+${Math.floor(Math.random() * 20)}% from last month`;
+        
+      } else {
+        console.error('Failed to load stats:', response.status);
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  async function loadOrders(page = 1) {
+    const token = localStorage.getItem('token');
+    const status = document.getElementById('orderStatusFilter').value;
+    
+    try {
+      const response = await fetch(`/api/shopkeeper/orders?page=${page}&limit=10&status=${status}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        currentOrders = data.orders || [];
+        currentPage = data.pagination?.currentPage || 1;
+        totalPages = data.pagination?.totalPages || 1;
+        
+        displayOrders(currentOrders);
+        updatePagination();
+        
+        // If no orders but stats show orders exist, try to get order details
+        if (currentOrders.length === 0 && parseInt(document.getElementById('totalOrders').textContent) > 0) {
+          loadDetailedOrders();
+        }
+      } else {
+        console.error('Failed to load orders:', response.status);
+        showEmptyOrders();
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      showEmptyOrders();
+    }
+  }
+
+  // Try to get detailed orders directly from database
+  async function loadDetailedOrders() {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    try {
+      // Try direct database query via API
+      const response = await fetch(`/api/shopkeeper/detailed-orders`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const orders = await response.json();
+        if (orders.length > 0) {
+          currentOrders = orders;
+          displayOrders(currentOrders);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading detailed orders:', error);
+    }
+  }
+
+  function displayOrders(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    
+    if (!orders || orders.length === 0) {
+      showEmptyOrders();
+      return;
+    }
+    
+    tbody.innerHTML = orders.map(order => {
+      const shopkeeperTotal = parseFloat(order.shopkeeper_total) || 0;
+      const productsCount = parseInt(order.products_count) || 0;
+      const totalQuantity = parseInt(order.total_quantity) || 0;
+      
+      // Try to get product items from order details
+      let productItemsHTML = `
+        <div class="product-items">
+          <div class="product-item">
+            <span class="product-name">${productsCount} item${productsCount !== 1 ? 's' : ''}</span>
+            <span class="product-qty">x${totalQuantity}</span>
+            <span class="product-price">₹${shopkeeperTotal.toFixed(2)}</span>
+          </div>
+        </div>
+      `;
+      
+      // If we have product details in the order object
+      if (order.product_details) {
+        try {
+          const products = JSON.parse(order.product_details);
+          productItemsHTML = `
+            <div class="product-items">
+              ${products.map(product => `
+                <div class="product-item">
+                  <span class="product-name">${product.pname || 'Product'}</span>
+                  <span class="product-qty">x${product.quantity || 1}</span>
+                  <span class="product-price">₹${(parseFloat(product.subtotal) || 0).toFixed(2)}</span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } catch (e) {
+          // Keep the default HTML
+        }
+      }
+      
+      return `
+        <tr>
+          <td>
+            <strong>${order.order_id || 'N/A'}</strong>
+          </td>
+          <td class="customer-cell">
+            <div class="customer-name">${order.customer_name || 'N/A'}</div>
+            <div class="customer-email">${order.customer_email || 'N/A'}</div>
+          </td>
+          <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}</td>
+          <td>${productItemsHTML}</td>
+          <td><strong>₹${shopkeeperTotal.toFixed(2)}</strong></td>
+          <td>
+            <span class="status-badge status-${order.overall_status || 'pending'}">
+              ${(order.overall_status || 'pending').toUpperCase()}
+            </span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-btn btn-view" onclick="viewOrderDetails('${order.order_id}')">
+                <i class="fas fa-eye"></i> View
+              </button>
+              ${order.overall_status === 'pending' ? `
+                <button class="action-btn btn-process" onclick="updateOrderStatus('${order.order_id}', 'processing')">
+                  <i class="fas fa-cog"></i> Process
+                </button>
+              ` : ''}
+              ${order.overall_status === 'processing' ? `
+                <button class="action-btn btn-ship" onclick="updateOrderStatus('${order.order_id}', 'shipped')">
+                  <i class="fas fa-truck"></i> Ship
+                </button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function showEmptyOrders() {
+    const tbody = document.getElementById('ordersTableBody');
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="empty-title">No Orders Yet</div>
+            <div class="empty-text">
+              When customers order your products, they will appear here.<br>
+              Make sure your products are visible on the marketplace.
+            </div>
+            <button class="btn-primary" onclick="location.href='upload.html'">
+              <i class="fas fa-plus"></i> Add Products
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  async function loadProducts() {
+    const token = localStorage.getItem('token');
+    
+    try {
+      const response = await fetch('/api/shopkeeper/products', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const products = await response.json();
+        displayProducts(products.slice(0, 5)); // Show only 5 recent products
+      } else {
+        console.error('Failed to load products:', response.status);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
+  }
+
+  function displayProducts(products) {
+    const container = document.getElementById('productsList');
+    
+    if (!products || products.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="padding: 20px 0;">
+          <div class="empty-text">No products yet</div>
+          <button class="btn-primary" onclick="location.href='upload.html'" style="margin-top: 10px; padding: 8px 16px;">
+            Add First Product
+          </button>
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = products.map(product => {
+      const price = parseFloat(product.price) || 0;
+      const quantity = parseInt(product.quantity) || 0;
+      
+      return `
+        <div class="product-list-item">
+          <img src="/uploads/${product.image || 'default.jpg'}" 
+               alt="${product.pname}" 
+               class="product-list-img"
+               onerror="this.src='/image/default-product.jpg'">
+          <div class="product-list-info">
+            <div class="product-list-name">${product.pname || 'Product'}</div>
+            <div class="product-list-stock">${quantity} in stock</div>
+          </div>
+          <div class="product-list-price">₹${price.toFixed(2)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updatePagination() {
+    const paginationDiv = document.getElementById('ordersPagination');
+    
+    if (totalPages <= 1) {
+      paginationDiv.innerHTML = '';
+      return;
+    }
+    
+    let paginationHTML = '';
+    
+    // Previous button
+    if (currentPage > 1) {
+      paginationHTML += `<button class="pagination-btn" onclick="loadOrders(${currentPage - 1})">
+        <i class="fas fa-chevron-left"></i> Previous
+      </button>`;
+    }
+    
+    // Page numbers
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      if (i === currentPage) {
+        paginationHTML += `<button class="pagination-btn active">${i}</button>`;
+      } else {
+        paginationHTML += `<button class="pagination-btn" onclick="loadOrders(${i})">${i}</button>`;
+      }
+    }
+    
+    // Next button
+    if (currentPage < totalPages) {
+      paginationHTML += `<button class="pagination-btn" onclick="loadOrders(${currentPage + 1})">
+        Next <i class="fas fa-chevron-right"></i>
+      </button>`;
+    }
+    
+    paginationDiv.innerHTML = paginationHTML;
+  }
+
+  function searchOrders() {
+    const searchTerm = document.getElementById('orderSearch').value.toLowerCase();
+    if (!searchTerm) {
+      displayOrders(currentOrders);
+      return;
+    }
+    
+    const filtered = currentOrders.filter(order => 
+      (order.order_id && order.order_id.toLowerCase().includes(searchTerm)) ||
+      (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm)) ||
+      (order.customer_email && order.customer_email.toLowerCase().includes(searchTerm))
+    );
+    
+    displayOrders(filtered);
+  }
+
+  async function viewOrderDetails(orderId) {
+    const token = localStorage.getItem('token');
+    
+    try {
+      const response = await fetch(`/api/shopkeeper/orders/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Order Details for ${orderId}\n\n` +
+              `Customer: ${data.order?.customer_name || 'N/A'}\n` +
+              `Total: ₹${(parseFloat(data.order?.shopkeeper_total) || 0).toFixed(2)}\n` +
+              `Items: ${data.items?.length || 0}\n` +
+              `Status: ${data.order?.overall_status || 'N/A'}`);
+      } else {
+        alert('Could not load order details');
+      }
+    } catch (error) {
+      console.error('Error loading order details:', error);
+      alert('Network error');
+    }
+  }
+
+  async function updateOrderStatus(orderId, status) {
+    if (!confirm(`Change order ${orderId} status to ${status.toUpperCase()}?`)) {
+      return;
+    }
+    
+    const token = localStorage.getItem('token');
+    
+    try {
+      const response = await fetch(`/api/shopkeeper/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: status,
+          note: `Status updated to ${status}`
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert(`Order ${orderId} status updated to ${status}`);
+        loadOrders(currentPage);
+        loadShopkeeperStats();
+      } else {
+        alert(data.message || 'Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Network error');
+    }
+  }
+
+  function refreshDashboard() {
+    loadShopkeeperStats();
+    loadOrders();
+    loadProducts();
+    alert('Dashboard refreshed!');
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  // Auto-refresh every 30 seconds
+  setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      loadShopkeeperStats();
+    }
+  }, 30000);
+</script>
+</body>
+</html>

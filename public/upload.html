@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Product - DreamBasket</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+    
+    .top-bar {
+      background: #293a55;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+    
+    .upload-btn {
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #0fe4e4;
+      color: #293a55;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    #uploadForm {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: all 0.5s ease;
+    }
+    
+    #uploadForm.open {
+      max-height: 2000px;
+      opacity: 1;
+      margin-top: 20px;
+    }
+    
+    #uploadForm h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #293a55;
+    }
+    
+    #uploadForm label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #555;
+      margin-top: 15px;
+    }
+    
+    #uploadForm input, 
+    #uploadForm select, 
+    #uploadForm textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+    
+    #uploadForm textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    #uploadForm button[type="submit"] {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      background: #293a55;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    
+    .size-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 6px;
+    }
+    
+    .size-item label {
+      margin: 0 10px;
+      flex-grow: 1;
+    }
+    
+    .size-item input[type="number"] {
+      width: 80px;
+    }
+    
+    .image-preview {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .image-preview img {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 8px;
+    }
+    
+    .message {
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      text-align: center;
+      display: none;
+    }
+    
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .method-selector {
+      margin: 15px 0;
+      padding: 15px;
+      background: #f0f8ff;
+      border-radius: 8px;
+    }
+    
+    .method-option {
+      margin-bottom: 10px;
+    }
+    
+    .method-option input[type="radio"] {
+      margin-right: 10px;
+    }
+    
+    .method-option label {
+      font-weight: normal;
+      margin-bottom: 0;
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo">
+    <img src="image/logo.png" alt="Logo" height="50">
+  </div>
+  
+  <div class="search-box">
+    <input type="text" placeholder="Search...">
+    <button>Search</button>
+  </div>
+  
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="cart.html">
+      <i class="fas fa-shopping-cart"></i> Cart
+    </a></li>
+    <li class="user-dropdown" id="userNav">
+      <a>
+        <i class="fa-solid fa-circle-user" style="font-size:30px;color:#0fe4e4;"></i>
+      </a>
+      <div class="dropdown-menu">
+        <p id="userGreeting"></p>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </li>
+  </ul>
+</nav>
+
+<div class="top-bar">
+  <h1>Shopkeeper Dashboard</h1>
+  <button class="upload-btn" id="toggleUploadBtn">Upload Product</button>
+</div>
+
+<div class="container">
+  <div id="uploadForm">
+    <h2>Upload Product Information</h2>
+    
+    <div id="message" class="message"></div>
+    
+    <form id="productForm" enctype="multipart/form-data">
+      <label for="pname">Product Name *</label>
+      <input type="text" id="pname" name="pname" required>
+      
+      <label for="description">Description</label>
+      <textarea id="description" name="description"></textarea>
+      
+      <label for="category">Category *</label>
+      <select id="category" name="category" required>
+        <option value="">-- Select Category --</option>
+        <option value="Motors, Tools & DIY">Motors, Tools & DIY</option>
+        <option value="Home & Lifestyle">Home & Lifestyle</option>
+        <option value="Sports & Outdoor">Sports & Outdoor</option>
+        <option value="Electronic Accessories">Electronic Accessories</option>
+        <option value="Groceries & Pets">Groceries & Pets</option>
+        <option value="Electronic Devices">Electronic Devices</option>
+        <option value="TV & Home Appliances">TV & Home Appliances</option>
+        <option value="Men's Fashion">Men's Fashion</option>
+      </select>
+      
+      <!-- Quantity Method Selection -->
+      <div class="method-selector">
+        <label style="font-weight: bold; display: block; margin-bottom: 10px;">Choose Quantity Method:</label>
+        
+        <div class="method-option">
+          <input type="radio" id="methodDirect" name="quantityMethod" value="direct" checked>
+          <label for="methodDirect">Direct Quantity (Recommended)</label>
+          <div style="margin-left: 25px; margin-top: 5px;">
+            <label for="direct_quantity">Total Quantity:</label>
+            <input type="number" id="direct_quantity" name="direct_quantity" min="1" value="10" required>
+          </div>
+        </div>
+        
+        <div class="method-option">
+          <input type="radio" id="methodSizes" name="quantityMethod" value="sizes">
+          <label for="methodSizes">Multiple Sizes with Different Quantities</label>
+        </div>
+      </div>
+      
+      <!-- Size Container (hidden by default) -->
+      <div id="size-container" style="display: none;">
+        <label>Sizes & Quantities:</label>
+      </div>
+      
+      <label for="price">Price (₹) *</label>
+      <input type="number" id="price" name="price" step="0.01" min="1" required>
+      
+      <label for="discount">Discount (%)</label>
+      <input type="number" id="discount" name="discount" step="0.01" min="0" max="100" value="0">
+      
+      <label for="image">Product Image *</label>
+      <input type="file" id="image" name="image" accept="image/*" required>
+      
+      <div class="image-preview">
+        <img id="preview-img" alt="Preview will appear here" style="display: none;">
+      </div>
+      
+      <button type="submit">Upload Product</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (!user) {
+      window.location.href = 'index.html';
+      return;
+    }
+    
+    if (!user.id.startsWith('S')) {
+      alert('Only shopkeepers can access this page!');
+      window.location.href = 'index.html';
+      return;
+    }
+    
+    // Show user info
+    document.getElementById('userGreeting').textContent = `Welcome, ${user.full_name || 'Shopkeeper'}`;
+    
+    // Initialize
+    const toggleBtn = document.getElementById('toggleUploadBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const imageInput = document.getElementById("image");
+    const previewImg = document.getElementById("preview-img");
+    const categorySelect = document.getElementById("category");
+    const sizeContainer = document.getElementById("size-container");
+    const productForm = document.getElementById("productForm");
+    const messageDiv = document.getElementById("message");
+    const methodDirect = document.getElementById("methodDirect");
+    const methodSizes = document.getElementById("methodSizes");
+    const directQuantityInput = document.getElementById("direct_quantity");
+
+    // Category sizes mapping
+    const categorySizes = {
+      "Motors, Tools & DIY": ["Small", "Medium", "Large", "Extra Large"],
+      "Home & Lifestyle": ["One Size", "Standard", "King Size"],
+      "Sports & Outdoor": ["S", "M", "L", "XL", "XXL"],
+      "Electronic Accessories": ["One Size"],
+      "Groceries & Pets": ["100g", "250g", "500g", "1kg", "5kg"],
+      "Electronic Devices": ["32GB", "64GB", "128GB", "256GB", "512GB"],
+      "TV & Home Appliances": ["32 inch", "40 inch", "50 inch", "55 inch", "65 inch"],
+      "Men's Fashion": ["S", "M", "L", "XL", "XXL", "XXXL"]
+    };
+
+    // Toggle form
+    toggleBtn.addEventListener('click', () => {
+      uploadForm.classList.toggle('open');
+      toggleBtn.textContent = uploadForm.classList.contains('open') ? 
+        'Close Form' : 'Upload Product';
+    });
+
+    // Image preview
+    imageInput.addEventListener("change", function() {
+      const file = this.files[0];
+      if (file) {
+        previewImg.src = URL.createObjectURL(file);
+        previewImg.style.display = "block";
+      }
+    });
+
+    // Handle quantity method selection
+    methodDirect.addEventListener('change', function() {
+      if (this.checked) {
+        sizeContainer.style.display = 'none';
+        directQuantityInput.required = true;
+      }
+    });
+
+    methodSizes.addEventListener('change', function() {
+      if (this.checked) {
+        sizeContainer.style.display = 'block';
+        directQuantityInput.required = false;
+        // Populate sizes if category is selected
+        if (categorySelect.value) {
+          populateSizes(categorySelect.value);
+        }
+      }
+    });
+
+    // Populate sizes based on category
+    function populateSizes(category) {
+      sizeContainer.innerHTML = '<label>Sizes & Quantities:</label>';
+      
+      if (categorySizes[category]) {
+        categorySizes[category].forEach(size => {
+          const div = document.createElement("div");
+          div.className = "size-item";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.name = "sizes[]";
+          checkbox.value = size;
+          checkbox.id = `size-${size}`;
+          checkbox.checked = true; // Auto-check by default
+
+          const label = document.createElement("label");
+          label.htmlFor = `size-${size}`;
+          label.textContent = size;
+
+          const qty = document.createElement("input");
+          qty.type = "number";
+          qty.min = "1";
+          qty.value = "10"; // Default quantity
+          qty.placeholder = "Qty";
+          qty.name = `qty-${size}`;
+
+          div.appendChild(checkbox);
+          div.appendChild(label);
+          div.appendChild(qty);
+          sizeContainer.appendChild(div);
+        });
+      }
+    }
+
+    // Category change handler
+    categorySelect.addEventListener("change", function() {
+      const selectedCategory = this.value;
+      
+      // If sizes method is selected, populate sizes
+      if (methodSizes.checked) {
+        populateSizes(selectedCategory);
+      }
+    });
+
+    // Form submission - FIXED VERSION
+    productForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      const user = JSON.parse(localStorage.getItem('user'));
+      
+      // Add basic fields
+      formData.append('pname', document.getElementById('pname').value);
+      formData.append('description', document.getElementById('description').value);
+      formData.append('category', document.getElementById('category').value);
+      formData.append('price', document.getElementById('price').value);
+      formData.append('discount', document.getElementById('discount').value || '0');
+      formData.append('shopkeeper_id', user.id);
+      
+      // Add image
+      const imageFile = document.getElementById('image').files[0];
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+      
+      // Handle quantity based on selected method
+      if (methodDirect.checked) {
+        // Method 1: Direct quantity
+        const quantity = parseInt(directQuantityInput.value) || 1;
+        formData.append('direct_quantity', quantity.toString());
+        formData.append('sizes[]', 'One Size');
+        formData.append('quantities', JSON.stringify({ 'One Size': quantity }));
+        
+        console.log('Using direct quantity:', quantity);
+      } else {
+        // Method 2: Multiple sizes
+        const sizeCheckboxes = document.querySelectorAll('input[name="sizes[]"]:checked');
+        const sizes = [];
+        const quantities = {};
+        let totalQuantity = 0;
+        
+        sizeCheckboxes.forEach(checkbox => {
+          const size = checkbox.value;
+          const qtyInput = checkbox.parentElement.querySelector('input[type="number"]');
+          const quantity = parseInt(qtyInput.value) || 1;
+          
+          sizes.push(size);
+          quantities[size] = quantity;
+          totalQuantity += quantity;
+        });
+        
+        // If no sizes checked, use default
+        if (sizes.length === 0) {
+          sizes.push('One Size');
+          quantities['One Size'] = 10;
+          totalQuantity = 10;
+        }
+        
+        // Add to formData
+        sizes.forEach(size => {
+          formData.append('sizes[]', size);
+        });
+        formData.append('quantities', JSON.stringify(quantities));
+        
+        console.log('Using sizes:', sizes);
+        console.log('Total quantity:', totalQuantity);
+      }
+      
+      // Show loading
+      messageDiv.textContent = 'Uploading product...';
+      messageDiv.className = 'message';
+      messageDiv.style.display = 'block';
+      
+      try {
+        const response = await fetch('/add-product', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        console.log('Server response:', result);
+        
+        if (response.ok) {
+          showMessage(`✅ Product uploaded successfully! `);
+          
+          // Reset form but keep shopkeeper info
+          productForm.reset();
+          document.getElementById('direct_quantity').value = '10'; // Reset to default
+          previewImg.style.display = 'none';
+          previewImg.src = '';
+          sizeContainer.innerHTML = '';
+          sizeContainer.style.display = 'none';
+          methodDirect.checked = true;
+          
+          setTimeout(() => {
+            uploadForm.classList.remove('open');
+            toggleBtn.textContent = 'Upload Product';
+            messageDiv.style.display = 'none';
+          }, 3000);
+        } else {
+          showMessage(`❌ Error: ${result.message}`, 'error');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        showMessage('❌ Network error: ' + error.message, 'error');
+      }
+    });
+
+    function showMessage(msg, type) {
+      messageDiv.textContent = msg;
+      messageDiv.className = `message ${type}`;
+      messageDiv.style.display = 'block';
+      
+      // Auto-hide after 5 seconds for errors
+      if (type === 'error') {
+        setTimeout(() => {
+          messageDiv.style.display = 'none';
+        }, 5000);
+      }
+    }
+    
+    // Initialize with default values
+    directQuantityInput.value = '10'; // Set default quantity to 10
+  });
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+</script>
+</body>
+</html>

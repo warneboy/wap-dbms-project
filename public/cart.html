@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart - DreamBasket</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    .cart-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+    
+    .cart-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .cart-header h1 {
+      color: #293a55;
+      margin-bottom: 10px;
+    }
+    
+    .cart-content {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 30px;
+    }
+    
+    @media (max-width: 768px) {
+      .cart-content {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .cart-items {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .cart-item {
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 20px;
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      align-items: center;
+    }
+    
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    
+    .cart-item-img img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    
+    .cart-item-details h3 {
+      margin: 0 0 5px 0;
+      color: #293a55;
+    }
+    
+    .cart-item-price {
+      color: #0fe4e4;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    .cart-item-quantity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .quantity-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .quantity-input {
+      width: 50px;
+      text-align: center;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .remove-btn {
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .cart-summary {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+    
+    .summary-title {
+      margin: 0 0 20px 0;
+      color: #293a55;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #0fe4e4;
+    }
+    
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      color: #555;
+    }
+    
+    .summary-total {
+      font-size: 20px;
+      font-weight: bold;
+      color: #293a55;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid #eee;
+    }
+    
+    .checkout-btn {
+      width: 100%;
+      padding: 15px;
+      background: #293a55;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.3s;
+    }
+    
+    .checkout-btn:hover {
+      background: #1a283f;
+    }
+    
+    .checkout-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .empty-cart {
+      text-align: center;
+      padding: 50px 20px;
+      color: #666;
+    }
+    
+    .empty-cart i {
+      font-size: 60px;
+      color: #ddd;
+      margin-bottom: 20px;
+    }
+    
+    .continue-shopping {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #0fe4e4;
+      color: #293a55;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 50px;
+      color: #666;
+    }
+    
+    .checkout-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .confirm-btn {
+      flex: 1;
+      padding: 12px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    .cancel-btn {
+      flex: 1;
+      padding: 12px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo">
+    <img src="image/logo.png" alt="Logo" height="50">
+  </div>
+  
+  <div class="search-box">
+    <input type="text" placeholder="Search...">
+    <button>Search</button>
+  </div>
+  
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="cart.html" class="active">
+      <i class="fas fa-shopping-cart"></i> Cart
+      <span id="navCartCount" style="background:red; color:white; padding:2px 6px; border-radius:50%; font-size:12px;">0</span>
+    </a></li>
+    <li class="user-dropdown" id="userNav">
+      <a>
+        <i class="fa-solid fa-circle-user" style="font-size:30px;color:#0fe4e4;"></i>
+      </a>
+      <div class="dropdown-menu">
+        <p id="userGreeting"></p>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </li>
+    <li id="loginNav" style="display:none;"><a href="index.html">Login</a></li>
+  </ul>
+</nav>
+
+<div class="cart-container">
+  <div class="cart-header">
+    <h1>Your Shopping Cart</h1>
+    <p id="cartSubtitle">Loading your cart...</p>
+  </div>
+  
+  <div id="message" class="message"></div>
+  
+  <div id="cartContent">
+    <!-- Cart content will be loaded here -->
+    <div class="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Loading cart...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="checkout-modal" id="checkoutModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Confirm Order</h2>
+      <button class="close-modal" onclick="closeCheckoutModal()">&times;</button>
+    </div>
+    
+    <div id="checkoutMessage" class="message"></div>
+    
+    <form id="checkoutForm">
+      <div class="form-group">
+        <label for="shipping_address">Shipping Address *</label>
+        <textarea id="shipping_address" name="shipping_address" required placeholder="Enter your complete shipping address"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <h3>Order Summary</h3>
+        <div id="orderSummary">
+          <!-- Order summary will be loaded here -->
+        </div>
+      </div>
+      
+      <div class="modal-buttons">
+        <button type="button" class="cancel-btn" onclick="closeCheckoutModal()">Cancel</button>
+        <button type="submit" class="confirm-btn" id="confirmOrderBtn">Place Order</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Order Success Modal -->
+<div class="checkout-modal" id="successModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Order Successful!</h2>
+      <button class="close-modal" onclick="closeSuccessModal()">&times;</button>
+    </div>
+    
+    <div style="text-align: center; padding: 20px 0;">
+      <i class="fas fa-check-circle" style="font-size: 60px; color: #28a745;"></i>
+      <h3 id="successOrderId"></h3>
+      <p id="successMessage"></p>
+      <div style="margin-top: 30px;">
+        <button onclick="closeSuccessModal()" style="padding: 10px 20px; background: #293a55; color: white; border: none; border-radius: 5px; cursor: pointer;">
+          Continue Shopping
+        </button>
+        <button onclick="viewOrder()" style="padding: 10px 20px; background: #0fe4e4; color: #293a55; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+          View Order
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentCart = [];
+  let currentOrderId = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (user) {
+      document.getElementById('userGreeting').textContent = `Welcome, ${user.full_name || 'User'}`;
+      document.getElementById('loginNav').style.display = 'none';
+      document.getElementById('userNav').style.display = 'block';
+      loadCart();
+    } else {
+      document.getElementById('loginNav').style.display = 'block';
+      document.getElementById('userNav').style.display = 'none';
+      showMessage('Please login to view your cart', 'error');
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 2000);
+    }
+    
+    // Sync localStorage cart with database on page load
+    syncCartWithDatabase();
+  });
+
+  function syncCartWithDatabase() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    
+    if (!user || !token) return;
+    
+    const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    if (localCart.length > 0) {
+      // Convert localStorage cart to database format
+      const dbCartItems = localCart.map(item => ({
+        product_id: item.p_id,
+        quantity: item.quantity
+      }));
+      
+      fetch('/api/cart/sync', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ items: dbCartItems })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Cart synced with database:', data);
+        // Clear localStorage cart after syncing
+        localStorage.removeItem('cart');
+      })
+      .catch(error => {
+        console.error('Error syncing cart:', error);
+      });
+    }
+  }
+
+  function loadCart() {
+    const token = localStorage.getItem('token');
+    
+    fetch('/api/cart', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to load cart');
+      }
+      return response.json();
+    })
+    .then(data => {
+      currentCart = data.items || [];
+      displayCart(data);
+      updateCartCount(data.summary?.total_items || 0);
+    })
+    .catch(error => {
+      console.error('Error loading cart:', error);
+      document.getElementById('cartContent').innerHTML = `
+        <div class="error" style="display:block;">
+          Error loading cart: ${error.message}
+        </div>
+      `;
+    });
+  }
+
+  function displayCart(cartData) {
+    const container = document.getElementById('cartContent');
+    
+    if (!cartData.items || cartData.items.length === 0) {
+      container.innerHTML = `
+        <div class="empty-cart">
+          <i class="fas fa-shopping-cart"></i>
+          <h2>Your cart is empty</h2>
+          <p>Add some products to get started!</p>
+          <a href="index.html" class="continue-shopping">
+            <i class="fas fa-arrow-left"></i> Continue Shopping
+          </a>
+        </div>
+      `;
+      document.getElementById('cartSubtitle').textContent = 'Your cart is empty';
+      return;
+    }
+    
+    const itemsHtml = cartData.items.map(item => `
+      <div class="cart-item" data-product-id="${item.p_id}">
+        <div class="cart-item-img">
+          <img src="${item.image_url || 'image/default-product.jpg'}" alt="${item.pname}">
+        </div>
+        <div class="cart-item-details">
+          <h3>${item.pname}</h3>
+          <p>${item.description || ''}</p>
+          <p><small>Category: ${item.category}</small></p>
+          <p><small>Size: ${item.size || 'One Size'}</small></p>
+          <div class="cart-item-price">₹${item.final_price.toFixed(2)}</div>
+          ${item.discount > 0 ? `<p style="color:green;font-size:14px;">${item.discount}% OFF</p>` : ''}
+          
+          <div class="cart-item-quantity">
+            <button class="quantity-btn" onclick="updateQuantity('${item.p_id}', ${item.quantity - 1})">-</button>
+            <input type="number" class="quantity-input" value="${item.quantity}" 
+                   min="1" max="${item.available_stock}"
+                   onchange="updateQuantity('${item.p_id}', this.value)">
+            <button class="quantity-btn" onclick="updateQuantity('${item.p_id}', ${item.quantity + 1})">+</button>
+            <button class="remove-btn" onclick="removeFromCart('${item.p_id}')">
+              <i class="fas fa-trash"></i> Remove
+            </button>
+          </div>
+          <p style="color: #666; font-size: 14px; margin-top: 5px;">
+            Subtotal: <strong>₹${item.subtotal.toFixed(2)}</strong>
+          </p>
+        </div>
+      </div>
+    `).join('');
+    
+    container.innerHTML = `
+      <div class="cart-content">
+        <div class="cart-items">
+          ${itemsHtml}
+        </div>
+        
+        <div class="cart-summary">
+          <h3 class="summary-title">Order Summary</h3>
+          <div class="summary-row">
+            <span>Subtotal (${cartData.summary.total_items} items)</span>
+            <span>₹${cartData.summary.total_amount.toFixed(2)}</span>
+          </div>
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span>FREE</span>
+          </div>
+          <div class="summary-row">
+            <span>Tax</span>
+            <span>₹0.00</span>
+          </div>
+          <div class="summary-total">
+            <span>Total</span>
+            <span>₹${cartData.summary.total_amount.toFixed(2)}</span>
+          </div>
+          
+          <button class="checkout-btn" onclick="openCheckoutModal(${cartData.summary.total_amount})">
+            Proceed to Checkout
+          </button>
+          
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="index.html" style="color: #0fe4e4; text-decoration: none;">
+              <i class="fas fa-arrow-left"></i> Continue Shopping
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('cartSubtitle').textContent = 
+      `${cartData.summary.total_items} item${cartData.summary.total_items !== 1 ? 's' : ''} in your cart`;
+  }
+
+  function updateQuantity(productId, newQuantity) {
+    const token = localStorage.getItem('token');
+    
+    fetch('/api/cart/update', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        product_id: productId,
+        quantity: parseInt(newQuantity)
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        showMessage(data.message, 'success');
+        loadCart(); // Reload cart
+      }
+    })
+    .catch(error => {
+      showMessage('Error updating quantity: ' + error.message, 'error');
+    });
+  }
+
+  function removeFromCart(productId) {
+    if (!confirm('Are you sure you want to remove this item from cart?')) {
+      return;
+    }
+    
+    const token = localStorage.getItem('token');
+    
+    fetch(`/api/cart/remove/${productId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        showMessage(data.message, 'success');
+        loadCart(); // Reload cart
+      }
+    })
+    .catch(error => {
+      showMessage('Error removing item: ' + error.message, 'error');
+    });
+  }
+
+  function clearCart() {
+    if (!confirm('Are you sure you want to clear your entire cart?')) {
+      return;
+    }
+    
+    const token = localStorage.getItem('token');
+    
+    fetch('/api/cart/clear', {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        showMessage(data.message, 'success');
+        loadCart(); // Reload cart
+      }
+    })
+    .catch(error => {
+      showMessage('Error clearing cart: ' + error.message, 'error');
+    });
+  }
+
+  function updateCartCount(count) {
+    const cartCount = document.getElementById('navCartCount');
+    if (cartCount) {
+      cartCount.textContent = count;
+      cartCount.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  function showMessage(message, type) {
+    const msgDiv = document.getElementById('message');
+    msgDiv.textContent = message;
+    msgDiv.className = `message ${type}`;
+    msgDiv.style.display = 'block';
+    
+    setTimeout(() => {
+      msgDiv.style.display = 'none';
+    }, 5000);
+  }
+
+  function openCheckoutModal(totalAmount) {
+    const modal = document.getElementById('checkoutModal');
+    const summaryDiv = document.getElementById('orderSummary');
+    
+    // Update order summary
+    summaryDiv.innerHTML = `
+      <div class="summary-row">
+        <span>Total Amount:</span>
+        <span><strong>₹${totalAmount.toFixed(2)}</strong></span>
+      </div>
+      <p style="color: #666; font-size: 14px; margin-top: 10px;">
+        Please enter your shipping address to place the order.
+      </p>
+    `;
+    
+    modal.style.display = 'flex';
+  }
+
+  function closeCheckoutModal() {
+    document.getElementById('checkoutModal').style.display = 'none';
+    document.getElementById('checkoutForm').reset();
+  }
+
+  document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const shippingAddress = document.getElementById('shipping_address').value;
+    const token = localStorage.getItem('token');
+    const confirmBtn = document.getElementById('confirmOrderBtn');
+    
+    if (!shippingAddress.trim()) {
+      showCheckoutMessage('Please enter shipping address', 'error');
+      return;
+    }
+    
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Processing...';
+    
+    fetch('/api/order/checkout', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        shipping_address: shippingAddress
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message && data.order_id) {
+        currentOrderId = data.order_id;
+        closeCheckoutModal();
+        showSuccessModal(data);
+      } else {
+        showCheckoutMessage(data.message || 'Checkout failed', 'error');
+      }
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Place Order';
+    })
+    .catch(error => {
+      showCheckoutMessage('Error during checkout: ' + error.message, 'error');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Place Order';
+    });
+  });
+
+  function showCheckoutMessage(message, type) {
+    const msgDiv = document.getElementById('checkoutMessage');
+    msgDiv.textContent = message;
+    msgDiv.className = `message ${type}`;
+    msgDiv.style.display = 'block';
+  }
+
+  function showSuccessModal(orderData) {
+    document.getElementById('successOrderId').textContent = `Order ID: ${orderData.order_id}`;
+    document.getElementById('successMessage').textContent = orderData.message;
+    document.getElementById('successModal').style.display = 'flex';
+  }
+
+  function closeSuccessModal() {
+    document.getElementById('successModal').style.display = 'none';
+    // Reload cart (should be empty now)
+    loadCart();
+    // Redirect to homepage
+    window.location.href = 'index.html';
+  }
+
+  function viewOrder() {
+    if (currentOrderId) {
+      // You can create an order details page or show in modal
+      alert(`Order ${currentOrderId} placed successfully!\nYou can view your orders in Order History.`);
+      closeSuccessModal();
+    }
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+</script>
+</body>
+</html>

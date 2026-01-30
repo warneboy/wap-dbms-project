@@ -1,7 +1,0 @@
- body { font-family: Arial; padding: 20px; background: #f9f9f9; }
-    h1 { text-align: center; }
-    #searchBar { display: block; margin: 20px auto; padding: 10px; width: 50%; font-size: 16px; }
-    .gallery { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-    .item { text-align: center; width: 150px; }
-    .item img { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc; }
-    .item p { margin-top: 10px; font-weight: bold; }

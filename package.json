@@ -1,18 +1,24 @@
 {
-  "name": "dbms-project",
+  "name": "dreambasket",
   "version": "1.0.0",
-  "description": "DBMS project backend for Render deployment",
-  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "prod": "NODE_ENV=production node server.js"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "cors": "^2.8.6",
-    "express": "^4.22.1",
-    "jsonwebtoken": "^9.0.3",
-    "multer": "^1.4.4",
-    "mysql2": "^3.16.1"
+    "express": "^4.18.2",
+    "mysql2": "^3.6.0",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1",
+    "bcrypt": "^5.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "dotenv": "^16.0.3",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
   }
 }
