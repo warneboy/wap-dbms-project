@@ -1,0 +1,375 @@
+================================================================================
+                          DREAMBASKET E-COMMERCE SYSTEM
+                          ENTITY-RELATIONSHIP DIAGRAM
+================================================================================
+
+DATE: Generated on [Current Date]
+DATABASE: dreambasket
+TOTAL ENTITIES: 9
+
+================================================================================
+                                  ENTITY LISTING
+================================================================================
+
+[1] ADMIN
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: id (VARCHAR(10))
+ATTRIBUTES:
+├── id: VARCHAR(10) [PK] - Admin ID starting with 'A'
+├── full_name: VARCHAR(100) NOT NULL
+├── email: VARCHAR(100) UNIQUE NOT NULL
+├── mobile: VARCHAR(15)
+├── password: VARCHAR(255) NOT NULL
+└── created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+DESCRIPTION: System administrators who manage the platform.
+
+[2] CUSTOMERS
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: id (VARCHAR(10))
+ATTRIBUTES:
+├── id: VARCHAR(10) [PK] - Customer ID starting with 'C'
+├── full_name: VARCHAR(100) NOT NULL
+├── email: VARCHAR(100) UNIQUE NOT NULL
+├── mobile: VARCHAR(15)
+├── password: VARCHAR(255) NOT NULL
+└── created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+DESCRIPTION: End users who purchase products on the platform.
+
+[3] SHOPKEEPERS
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: id (VARCHAR(10))
+ATTRIBUTES:
+├── id: VARCHAR(10) [PK] - Shopkeeper ID starting with 'S'
+├── full_name: VARCHAR(100) NOT NULL
+├── email: VARCHAR(100) UNIQUE NOT NULL
+├── mobile: VARCHAR(15) NOT NULL
+├── password: VARCHAR(255) NOT NULL
+├── shop_name: VARCHAR(200) NOT NULL
+├── shop_address: TEXT NOT NULL
+├── registration_no: VARCHAR(50) UNIQUE NOT NULL
+├── citizenship_image: VARCHAR(255)
+├── status: ENUM('pending', 'approved', 'rejected') DEFAULT 'pending'
+├── verified: BOOLEAN DEFAULT FALSE
+└── created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+DESCRIPTION: Vendors who sell products on the platform.
+
+[4] PRODUCTS
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: p_id (VARCHAR(10))
+ATTRIBUTES:
+├── p_id: VARCHAR(10) [PK] - Product ID starting with 'P'
+├── pname: VARCHAR(200) NOT NULL
+├── description: TEXT
+├── category: VARCHAR(100) NOT NULL
+├── size: VARCHAR(255)
+├── quantity: INT DEFAULT 0
+├── price: DECIMAL(10,2) NOT NULL
+├── discount: DECIMAL(5,2) DEFAULT 0.00
+├── image: VARCHAR(255)
+├── shopkeeper_id: VARCHAR(10) NOT NULL [FK → Shopkeepers.id]
+└── created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+FOREIGN KEYS:
+└── shopkeeper_id → SHOPKEEPERS(id) ON DELETE CASCADE
+
+DESCRIPTION: Items available for sale on the platform.
+
+[5] CART
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: cart_id (INT AUTO_INCREMENT)
+ATTRIBUTES:
+├── cart_id: INT AUTO_INCREMENT [PK]
+├── customer_id: VARCHAR(10) NOT NULL [FK → Customers.id]
+├── product_id: VARCHAR(10) NOT NULL [FK → Products.p_id]
+├── quantity: INT DEFAULT 1
+└── added_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+FOREIGN KEYS:
+├── customer_id → CUSTOMERS(id) ON DELETE CASCADE
+└── product_id → PRODUCTS(p_id) ON DELETE CASCADE
+
+UNIQUE CONSTRAINT:
+└── UNIQUE(customer_id, product_id) - Prevents duplicate cart items
+
+DESCRIPTION: Shopping cart for customers.
+
+[6] ORDERS
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: order_id (VARCHAR(15))
+ATTRIBUTES:
+├── order_id: VARCHAR(15) [PK] - Order ID starting with 'ORD'
+├── customer_id: VARCHAR(10) NOT NULL [FK → Customers.id]
+├── total_amount: DECIMAL(10,2) NOT NULL
+├── status: ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') 
+├── payment_status: ENUM('pending', 'paid', 'failed') DEFAULT 'pending'
+├── shipping_address: TEXT
+└── created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+FOREIGN KEYS:
+└── customer_id → CUSTOMERS(id) ON DELETE CASCADE
+
+DESCRIPTION: Main order header containing order summary.
+
+[7] ORDER_ITEMS
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: order_item_id (INT AUTO_INCREMENT)
+ATTRIBUTES:
+├── order_item_id: INT AUTO_INCREMENT [PK]
+├── order_id: VARCHAR(15) NOT NULL [FK → Orders.order_id]
+├── product_id: VARCHAR(10) NOT NULL [FK → Products.p_id]
+├── quantity: INT NOT NULL
+├── unit_price: DECIMAL(10,2) NOT NULL
+└── subtotal: DECIMAL(10,2) NOT NULL
+
+FOREIGN KEYS:
+├── order_id → ORDERS(order_id) ON DELETE CASCADE
+└── product_id → PRODUCTS(p_id) ON DELETE CASCADE
+
+DESCRIPTION: Line items for each order.
+
+[8] SHOPKEEPER_ORDERS
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: id (INT AUTO_INCREMENT)
+ATTRIBUTES:
+├── id: INT AUTO_INCREMENT [PK]
+├── order_id: VARCHAR(15) NOT NULL [FK → Orders.order_id]
+├── product_id: VARCHAR(10) NOT NULL [FK → Products.p_id]
+├── shopkeeper_id: VARCHAR(10) NOT NULL [FK → Shopkeepers.id]
+├── customer_id: VARCHAR(10) NOT NULL [FK → Customers.id]
+├── quantity: INT NOT NULL
+├── unit_price: DECIMAL(10,2) NOT NULL
+├── subtotal: DECIMAL(10,2) NOT NULL
+├── status: ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled')
+└── created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+FOREIGN KEYS:
+├── order_id → ORDERS(order_id) ON DELETE CASCADE
+├── product_id → PRODUCTS(p_id) ON DELETE CASCADE
+├── shopkeeper_id → SHOPKEEPERS(id) ON DELETE CASCADE
+└── customer_id → CUSTOMERS(id) ON DELETE CASCADE
+
+DESCRIPTION: Order distribution to individual shopkeepers.
+
+[9] ORDER_STATUS_HISTORY
+────────────────────────────────────────────────────────────────────────────────
+PRIMARY KEY: history_id (INT AUTO_INCREMENT)
+ATTRIBUTES:
+├── history_id: INT AUTO_INCREMENT [PK]
+├── order_id: VARCHAR(15) NOT NULL [FK → Orders.order_id]
+├── shopkeeper_id: VARCHAR(10) [FK → Shopkeepers.id]
+├── status: VARCHAR(50) NOT NULL
+├── note: TEXT
+├── updated_by: ENUM('admin', 'shopkeeper', 'system') NOT NULL
+└── created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+FOREIGN KEYS:
+├── order_id → ORDERS(order_id) ON DELETE CASCADE
+└── shopkeeper_id → SHOPKEEPERS(id) ON DELETE SET NULL
+
+DESCRIPTION: Audit trail of order status changes.
+
+================================================================================
+                                 CARDINALITY
+================================================================================
+
+ENTITY RELATIONSHIPS AND CARDINALITIES:
+
+1. ADMIN to SHOPKEEPERS
+   ├── Relationship: MANAGES
+   ├── Cardinality: One-to-Many (1:N)
+   ├── Description: One admin can manage many shopkeepers
+   └── Direction: ADMIN(1) ──< MANAGES >── (N)SHOPKEEPERS
+
+2. SHOPKEEPERS to PRODUCTS
+   ├── Relationship: LISTS
+   ├── Cardinality: One-to-Many (1:N)
+   ├── Description: One shopkeeper can list many products
+   └── Direction: SHOPKEEPERS(1) ──< LISTS >── (N)PRODUCTS
+
+3. CUSTOMERS to CART
+   ├── Relationship: HAS
+   ├── Cardinality: One-to-Many (1:N)
+   ├── Description: One customer can have many cart items
+   └── Direction: CUSTOMERS(1) ──< HAS >── (N)CART
+
+4. CUSTOMERS to ORDERS
+   ├── Relationship: PLACES
+   ├── Cardinality: One-to-Many (1:N)
+   ├── Description: One customer can place many orders
+   └── Direction: CUSTOMERS(1) ──< PLACES >── (N)ORDERS
+
+5. CART to PRODUCTS
+   ├── Relationship: CONTAINS
+   ├── Cardinality: Many-to-One (N:1)
+   ├── Description: Many cart items can contain the same product
+   └── Direction: CART(N) ──< CONTAINS >── (1)PRODUCTS
+
+6. ORDERS to ORDER_ITEMS
+   ├── Relationship: CONTAINS
+   ├── Cardinality: One-to-Many (1:N)
+   ├── Description: One order contains many order items
+   └── Direction: ORDERS(1) ──< CONTAINS >── (N)ORDER_ITEMS
+
+7. ORDER_ITEMS to PRODUCTS
+   ├── Relationship: INCLUDES
+   ├── Cardinality: Many-to-One (N:1)
+   ├── Description: Many order items can include the same product
+   └── Direction: ORDER_ITEMS(N) ──< INCLUDES >── (1)PRODUCTS
+
+8. ORDERS to SHOPKEEPER_ORDERS
+   ├── Relationship: DISTRIBUTES
+   ├── Cardinality: One-to-Many (1:N)
+   ├── Description: One order can be distributed to many shopkeepers
+   └── Direction: ORDERS(1) ──< DISTRIBUTES >── (N)SHOPKEEPER_ORDERS
+
+9. SHOPKEEPERS to SHOPKEEPER_ORDERS
+   ├── Relationship: RECEIVES
+   ├── Cardinality: One-to-Many (1:N)
+   ├── Description: One shopkeeper can receive many orders
+   └── Direction: SHOPKEEPERS(1) ──< RECEIVES >── (N)SHOPKEEPER_ORDERS
+
+10. ORDERS to ORDER_STATUS_HISTORY
+    ├── Relationship: TRACKED_IN
+    ├── Cardinality: One-to-Many (1:N)
+    ├── Description: One order can have many status history records
+    └── Direction: ORDERS(1) ──< TRACKED_IN >── (N)ORDER_STATUS_HISTORY
+
+================================================================================
+                           ER DIAGRAM (TEXT REPRESENTATION)
+================================================================================
+
+                                +─────────────+
+                                │    ADMIN    │
+                                ├─────────────┤
+                                │ PK | id     │
+                                │    | email  │
+                                +──────┬──────+
+                                       │
+                                       │ (1:N) MANAGES
+                                       │
+                                +──────▼──────+
+                                │ SHOPKEEPERS │
+                                ├─────────────┤
+                                │ PK | id     │
+                                │    | status │
+                                +──────┬──────+
+                                       │
+                          +────────────┼────────────+
+                          │ (1:N) LISTS│            │
+                          │            │            │
+                     +────▼─────+      │      +────▼─────+
+                     │ PRODUCTS │      │      │CUSTOMERS │
+                     ├──────────┤      │      ├──────────┤
+                     │PK| p_id  │      │      │PK| id    │
+                     │FK|shop_id│      │      │   | email│
+                     +────┬─────+      │      +────┬─────+
+                          │            │           │
+                          │            │           │ (1:N) HAS
+                     (N:1)│ CONTAINS   │           │
+                          │            │      +────▼─────+
+                     +────▼─────+      │      │   CART   │
+                     │   CART   │      │      ├──────────┤
+                     ├──────────┤      │      │PK|cart_id│
+                     │PK|cart_id│      │      │UK|cus,pro│
+                     │UK|cus,pro│      │      +────┬─────+
+                     +────┬─────+      │           │
+                          │            │           │ (1:N) PLACES
+                          │            │           │
+                     +────▼─────+      │      +────▼─────+
+                     │  ORDERS  │      │      │  ORDERS  │
+                     ├──────────┤      │      ├──────────┤
+                     │PK|order_id      │      │PK|order_id
+                     │FK|cus_id │      │      │FK|cus_id │
+                     +────┬─────+      │      +────┬─────+
+                          │            │           │
+                     (1:N)│ CONTAINS   │     (1:N) │ DISTRIBUTES
+                          │            │           │
+                     +────▼───────────▼┐    +────▼───────────▼┐
+                     │   ORDER_ITEMS   │    │SHOPKEEPER_ORDERS│
+                     ├─────────────────┤    ├─────────────────┤
+                     │PK|order_item_id │    │PK| id           │
+                     │FK|order_id      │    │FK|order_id      │
+                     │FK|product_id    │    │FK|shopkeeper_id │
+                     +────┬────────────┘    +────┬────────────┘
+                          │                     │
+                     (N:1)│ INCLUDES       (N:1)│ RECEIVES
+                          │                     │
+                     +────▼─────+          +────▼─────+
+                     │ PRODUCTS │          │SHOPKEEPERS│
+                     +──────────+          +──────────+
+                          │                     │
+                          └─────────────────────┘
+                                    │ (1:N) TRACKED_IN
+                                    │
+                              +─────▼──────────────┐
+                              │ORDER_STATUS_HISTORY│
+                              ├────────────────────┤
+                              │PK|history_id       │
+                              │FK|order_id         │
+                              │FK|shopkeeper_id    │
+                              +────────────────────┘
+
+================================================================================
+                         RELATIONSHIP SUMMARY MATRIX
+================================================================================
+
+FROM ENTITY        TO ENTITY           RELATIONSHIP    CARDINALITY
+───────────────────────────────────────────────────────────────────────────────
+ADMIN             SHOPKEEPERS          MANAGES         1:N
+SHOPKEEPERS       PRODUCTS             LISTS           1:N
+CUSTOMERS         CART                 HAS             1:N
+CUSTOMERS         ORDERS               PLACES          1:N
+CART              PRODUCTS             CONTAINS        N:1
+ORDERS            ORDER_ITEMS          CONTAINS        1:N
+ORDER_ITEMS       PRODUCTS             INCLUDES        N:1
+ORDERS            SHOPKEEPER_ORDERS    DISTRIBUTES     1:N
+SHOPKEEPERS       SHOPKEEPER_ORDERS    RECEIVES        1:N
+ORDERS            ORDER_STATUS_HISTORY TRACKED_IN      1:N
+
+================================================================================
+                          BUSINESS RULES SUMMARY
+================================================================================
+
+1. USER HIERARCHY:
+   - Three distinct user types: Admin, Customer, Shopkeeper
+   - Each has unique permissions and access levels
+
+2. PRODUCT MANAGEMENT:
+   - Products must belong to exactly one shopkeeper
+   - Shopkeeper must be approved before products are visible
+
+3. CART FUNCTIONALITY:
+   - Customers can add multiple products to cart
+   - Unique constraint prevents duplicate cart entries per product
+   - Real-time stock validation
+
+4. ORDER PROCESSING:
+   - Orders are split by shopkeeper for fulfillment
+   - Each shopkeeper manages their portion independently
+   - Status tracking at both order and shopkeeper level
+
+5. INVENTORY MANAGEMENT:
+   - Stock decreases automatically on order placement
+   - Real-time availability checking
+
+6. AUDIT TRAIL:
+   - All status changes are logged
+   - Track who made changes (admin/shopkeeper/system)
+
+================================================================================
+                         DATABASE SPECIFICATIONS
+================================================================================
+
+ENGINE: InnoDB
+CHARSET: utf8mb4
+TOTAL TABLES: 9
+FOREIGN KEYS: 14
+AUTO_INCREMENT FIELDS: 4
+ENUM FIELDS: 4
+
+================================================================================
+                               END OF DOCUMENT
+================================================================================
